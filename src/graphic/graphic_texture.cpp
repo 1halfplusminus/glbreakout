@@ -1,5 +1,7 @@
-#include "graphic_texture.hpp"
+// clang-format off
 #include <glad/glad.h>
+// clang-format on
+#include "graphic_texture.hpp"
 #include <iostream>
 std::shared_ptr<Graphic::Texture>
 Graphic::texture_image_loader::load(Image &image) const {

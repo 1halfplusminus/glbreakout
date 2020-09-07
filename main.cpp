@@ -38,13 +38,18 @@ int main() {
 
   // Create our registry and initialize the game
   entt::registry registry;
-  Game::init(registry);
+  Game::init(registry, SCR_WIDTH, SCR_HEIGHT);
 
   auto lastFrame = glfwGetTime();
   while (!glfwWindowShouldClose(window)) {
     auto currentFrame = glfwGetTime();
     auto deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
+
+    Game::processInput(window, registry, lastFrame);
+    Game::update(registry, lastFrame);
+    Game::render(registry);
+
     glfwSwapBuffers(window);
     glfwPollEvents();
   }

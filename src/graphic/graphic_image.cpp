@@ -11,9 +11,10 @@ Graphic::Image::Image(std::string path, bool flipVertically) {
 };
 
 std::shared_ptr<Graphic::Image>
-Graphic::image_loader::load(std::string path) const {
+Graphic::image_loader::load(std::string path, bool flipVertically) const {
   auto image = std::shared_ptr<Graphic::Image>(new Image());
   image->path = path;
+  image->flipVertically = flipVertically;
   if (image->data == nullptr) {
     stbi_set_flip_vertically_on_load(image->flipVertically);
     image->data = stbi_load(image->path.c_str(), &image->width, &image->height,

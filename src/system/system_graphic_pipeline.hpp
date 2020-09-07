@@ -6,7 +6,7 @@
 
 namespace Graphic {
 void init(entt::registry &registry);
-void update(entt::registry &registry);
+void update(entt::registry &registry, float dt);
 } // namespace Graphic
 
 #endif

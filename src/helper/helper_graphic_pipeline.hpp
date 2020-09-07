@@ -1,11 +1,11 @@
 #ifndef HELPER_SHADER_HPP
 #define HELPER_SHADER_HPP
 
-#include "component_graphic_pipeline.hpp"
-#include "ecs.h"
 // clang-format off
 #include <glad/glad.h>
 // clang-format on
+#include "component_graphic_pipeline.hpp"
+#include "ecs.h"
 #include <iostream>
 #include "string.h"
 

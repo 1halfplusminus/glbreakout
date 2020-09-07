@@ -16,7 +16,8 @@ public:
 };
 struct image_loader final
     : entt::resource_loader<image_loader, Graphic::Image> {
-  std::shared_ptr<Graphic::Image> load(std::string path) const;
+  std::shared_ptr<Graphic::Image> load(std::string path,
+                                       bool flipVertically = false) const;
 };
 } // namespace Graphic
 

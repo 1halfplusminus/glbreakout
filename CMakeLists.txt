@@ -46,6 +46,7 @@ set(HEADER_FILES
 ./src/graphic/graphic_texture.cpp 
 ./src/component/component_graphic_pipeline.hpp 
 ./src/component/component_graphic_pipeline.cpp 
+./src/component/component_render.hpp 
 "./src/system/system_graphic_pipeline.hpp" 
 "./src/system/system_graphic_pipeline.cpp" 
 "./src/helper/helper_graphic_pipeline.hpp"
