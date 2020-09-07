@@ -79,6 +79,11 @@
         "stack": "cpp",
         "thread": "cpp",
         "unordered_set": "cpp",
-        "xtree": "cpp"
+        "xtree": "cpp",
+        "any": "cpp",
+        "atomic": "cpp",
+        "optional": "cpp",
+        "queue": "cpp",
+        "variant": "cpp"
     }
 }
