@@ -51,6 +51,9 @@ set(HEADER_FILES
 "./src/system/system_graphic_pipeline.cpp" 
 "./src/helper/helper_graphic_pipeline.hpp"
 "./src/helper/helper_graphic_pipeline.cpp" 
+./src/gameplay/component_gameplay.hpp 
+./src/gameplay/helper_gameplay.hpp 
+./src/gameplay/helper_gameplay.cpp 
 )
 
 add_library(libs STATIC ./glad/src/glad.c ./ecs.h  )

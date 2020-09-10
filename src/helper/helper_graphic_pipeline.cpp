@@ -7,16 +7,20 @@
 
 std::shared_ptr<Graphic::ShaderSource>
 Graphic::shader_source_loader::load(std::string path,
-                                    Graphic::ShaderType type) const {
+                                    Graphic::ShaderType type) const
+{
   std::ifstream ifs(path.c_str(),
                     std::ios::in | std::ios::binary | std::ios::ate);
   auto source =
       std::shared_ptr<Graphic::ShaderSource>(new Graphic::ShaderSource{});
   source->type = type;
-  if (!ifs || ifs.bad()) {
+  if (!ifs || ifs.bad())
+  {
     std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ " << path
               << std::endl;
-  } else {
+  }
+  else
+  {
     std::ifstream::pos_type fileSize = ifs.tellg();
     ifs.seekg(0, std::ios::end);
     source->source.reserve(ifs.tellg());
@@ -30,7 +34,8 @@ Graphic::shader_source_loader::load(std::string path,
 }
 
 std::shared_ptr<Graphic::Shader>
-Graphic::shader_loader::load(ShaderSource &shaderSource) const {
+Graphic::shader_loader::load(ShaderSource &shaderSource) const
+{
 
   // build and compile our shader program
   // ------------------------------------
@@ -47,7 +52,8 @@ Graphic::shader_loader::load(ShaderSource &shaderSource) const {
   int success;
   char infoLog[1024];
   glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-  if (!success) {
+  if (!success)
+  {
     glGetShaderInfoLog(shader, 1024, NULL, infoLog);
     std::cout << "ERROR::SHADER_COMPILATION_ERROR of type: "
               << (shaderSource.type == VertexShader ? "VERTEX" : "FRAGMENT")
@@ -60,17 +66,20 @@ Graphic::shader_loader::load(ShaderSource &shaderSource) const {
 }
 
 std::shared_ptr<Graphic::ShaderProgam>
-Graphic::shader_program_loader::load(std::vector<Shader> &shaders) const {
+Graphic::shader_program_loader::load(std::vector<Shader> &shaders) const
+{
   // link shaders
   unsigned int ID = glCreateProgram();
-  for (auto &shader : shaders) {
+  for (auto &shader : shaders)
+  {
     glAttachShader(ID, shader.id);
   }
   glLinkProgram(ID);
   int success;
   char infoLog[1024];
   glGetProgramiv(ID, GL_LINK_STATUS, &success);
-  if (!success) {
+  if (!success)
+  {
     glGetProgramInfoLog(ID, 1024, NULL, infoLog);
     std::cout << "ERROR::PROGRAM_LINKING_ERROR of type: "
               << "PROGRAM"

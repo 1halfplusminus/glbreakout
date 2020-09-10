@@ -4,12 +4,14 @@
 #include "graphic_texture.hpp"
 #include <iostream>
 std::shared_ptr<Graphic::Texture>
-Graphic::texture_image_loader::load(Image &image) const {
+Graphic::texture_image_loader::load(Image &image) const
+{
   auto textureResource =
       std::shared_ptr<Graphic::Texture>(new Graphic::Texture());
   unsigned int texture;
   glGenTextures(1, &texture);
-  if (image.data) {
+  if (image.data)
+  {
     GLenum format;
     if (image.nrChannels == 1)
       format = GL_RED;
@@ -38,5 +40,7 @@ Graphic::texture_image_loader::load(Image &image) const {
     glGenerateMipmap(GL_TEXTURE_2D);
   }
   textureResource->id = texture;
+  textureResource->width = image.width;
+  textureResource->height = image.height;
   return textureResource;
 }

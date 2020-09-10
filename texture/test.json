@@ -1,0 +1,44 @@
+{"frames": {
+
+"awesomeface.png":
+{
+	"frame": {"x":0,"y":0,"w":512,"h":512},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":512,"h":512},
+	"sourceSize": {"w":512,"h":512}
+},
+"block.png":
+{
+	"frame": {"x":0,"y":512,"w":128,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":128,"h":128},
+	"sourceSize": {"w":128,"h":128}
+},
+"block_solid.png":
+{
+	"frame": {"x":128,"y":512,"w":128,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":128,"h":128},
+	"sourceSize": {"w":128,"h":128}
+},
+"paddle.png":
+{
+	"frame": {"x":0,"y":640,"w":512,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":512,"h":128},
+	"sourceSize": {"w":512,"h":128}
+}},
+"meta": {
+	"app": "https://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "atlas.png",
+	"format": "RGBA8888",
+	"size": {"w":512,"h":768},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:66058906bfb9cb12ee862f8a6c2cdba2:e1b5d9700d190e8cd88dc41a7ed9a325:f73158572e09d14c35c6a81bd6140a22$"
+}
+}

@@ -11,7 +11,8 @@
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 
-int main() {
+int main()
+{
   // Init GLFW
   glfwInit();
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -20,7 +21,8 @@ int main() {
 
   GLFWwindow *window =
       glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Get Started", NULL, NULL);
-  if (window == NULL) {
+  if (window == NULL)
+  {
     std::cout << "Failed to create GLFW window" << std::endl;
     glfwTerminate();
     return -1;
@@ -29,7 +31,8 @@ int main() {
   glfwSwapInterval(0);
   glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
   // INIT GLAD
-  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+  {
     std::cout << "Failed to initialize GLAD" << std::endl;
     return -1;
   }
@@ -41,7 +44,8 @@ int main() {
   Game::init(registry, SCR_WIDTH, SCR_HEIGHT);
 
   auto lastFrame = glfwGetTime();
-  while (!glfwWindowShouldClose(window)) {
+  while (!glfwWindowShouldClose(window))
+  {
     auto currentFrame = glfwGetTime();
     auto deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
@@ -57,6 +61,7 @@ int main() {
   return 0;
 }
 
-void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
+void framebuffer_size_callback(GLFWwindow *window, int width, int height)
+{
   glViewport(0, 0, width, height);
 }
