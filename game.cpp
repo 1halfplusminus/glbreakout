@@ -21,53 +21,75 @@ void Game::init(Registry &registry, float w, float h)
 {
 
     Graphic::init(registry);
+    auto main_vs_source = Graphic::load_shader_source("main_vs"_hs, "./shader/main.vect", Graphic::VertexShader);
+    auto main_fs_source = Graphic::load_shader_source("main_fs"_hs, "./shader/main.frag", Graphic::FragmentShader);
 
-    // load ressource
-    entt::resource_cache<Graphic::ShaderSource> shader_source_cache;
-    shader_source_cache.load<Graphic::shader_source_loader>(
-        "main_vs"_hs, "./shader/main.vect", Graphic::VertexShader);
-    shader_source_cache.load<Graphic::shader_source_loader>(
-        "main_fs"_hs, "./shader/main.frag", Graphic::FragmentShader);
+    auto main_vs = Graphic::load_shader("main_vs"_hs, main_vs_source);
+    auto main_fs = Graphic::load_shader("main_fs"_hs, main_fs_source);
 
-    entt::resource_cache<Graphic::Shader> shader_cache;
-    shader_cache.load<Graphic::shader_loader>(
-        "main_vs"_hs, shader_source_cache.handle("main_vs"_hs));
-    shader_cache.load<Graphic::shader_loader>(
-        "main_fs"_hs, shader_source_cache.handle("main_fs"_hs));
+    auto main_shader_r = Graphic::load_shader_program("main"_hs,
+                                                      std::vector<Graphic::Shader>{main_vs,
+                                                                                   main_fs});
 
-    entt::resource_cache<Graphic::ShaderProgam> program_cache;
-    auto &main_shader_r = program_cache.load<Graphic::shader_program_loader>(
-        "main"_hs,
-        std::vector<Graphic::Shader>{shader_cache.handle("main_vs"_hs),
-                                     shader_cache.handle("main_fs"_hs)});
+    auto atlas_image = Graphic::load_image("atlas"_hs, "./texture/atlas.png", false);
 
-    auto main_shader = registry.create();
+    auto &atlas = Graphic::load_texture("atlas"_hs, atlas_image);
 
-    entt::resource_cache<Graphic::Image> image_cache;
-    image_cache.load<Graphic::image_loader>("atlas"_hs,
-                                            "./texture/atlas.png", false);
+    // register shaderprogram
 
-    entt::resource_cache<Graphic::Texture> texture_cache;
-    auto &atlas = texture_cache.load<Graphic::texture_image_loader>(
-                                   "atlas"_hs, image_cache.handle("atlas"_hs))
-                      .get();
-
+    entt::basic_handle<entt::entity> handle{registry};
+    std::vector<Graphic::VertexData> data;
+    data.push_back(Graphic::VertexData{glm::vec4(0.0f, 1.0f, 0.0f, 1.0f)});
+    data.push_back(Graphic::VertexData{glm::vec4(1.0f, 0.0f, 1.0f, 0.0f)});
+    data.push_back(Graphic::VertexData{glm::vec4(0.0f, 0.0f, 0.0f, 0.0f)});
+    data.push_back(Graphic::VertexData{glm::vec4(0.0f, 1.0f, 0.0f, 1.0f)});
+    data.push_back(Graphic::VertexData{glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)});
+    data.push_back(Graphic::VertexData{glm::vec4(1.0f, 0.0f, 1.0f, 0.0f)});
+    int verticesIndex = 0;
+    Graphic::Sprite renderable = Graphic::Sprite({atlas,
+                                                  glm::vec4(0, 640, 512, 128)});
     // create player
-    for (int i = 0; i < 10000; i++)
+    for (int i = 0; i < 2000; i++)
     {
         auto player = registry.create();
-
-        registry.emplace<Graphic::Sprite>(
-            player, std::vector<float>({0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-
-                                        0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f}),
-            atlas,
-            glm::vec4(0, 640, 512, 128));
-
+        registry.emplace<Graphic::Sprite>(player, renderable);
+        auto position = registry.emplace<Graphic::Position>(player, glm::vec3(200.0f, 200.0f, 0.0f));
+        auto transform = registry.emplace<Graphic::Transform>(player, 45.0f, glm::vec2(512.0f, 128.0f));
         registry.emplace<Graphic::Material>(
-            player, main_shader_r.get().id, glm::vec3(0.0f, 1.0f, 0.0f));
-        registry.emplace<Graphic::Position>(player, glm::vec3(200.0f, 200.0f, 0.0f));
-        registry.emplace<Graphic::Transform>(player, 45.0f, glm::vec2(512.0f, 128.0f));
+            player, main_shader_r.get().id);
+
+        for (int y = 0; y < data.size(); y++)
+        {
+            auto vertex = registry.create();
+            float offsetX =
+                ((2 * (renderable.rect.x)) + 1) / (2 * renderable.texture.width);
+            float offsetY =
+                ((2 * (renderable.rect.y)) + 1) / (2 * renderable.texture.height);
+            float ux = ((2 * (renderable.rect.z)) + 1) / (2 * renderable.texture.width);
+            float uy =
+                ((2 * (renderable.rect.w)) + 1) / (2 * renderable.texture.height);
+            glm::vec2 uv;
+            uv.x = (data[y].vertice.x * ux) + offsetX;
+            uv.y = (data[y].vertice.y * uy) + offsetY;
+            glm::vec4 color;
+            color = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
+            // model
+            glm::mat4 model = glm::mat4(1.0f);
+            auto rotate = transform.rotate;
+            auto size = transform.size;
+            model = glm::translate(model,
+                                   glm::vec3(position.value.x, position.value.y, 0.0f));
+            model =
+                glm::translate(model, glm::vec3(0.5f * size.x, 0.5f * size.y, 0.0f));
+            model =
+                glm::rotate(model, glm::radians(rotate), glm::vec3(0.0f, 0.0f, 1.0f));
+            model =
+                glm::translate(model, glm::vec3(-0.5f * size.x, -0.5f * size.y, 0.0f));
+
+            model = glm::scale(model, glm::vec3(size, 1.0f));
+
+            registry.emplace<Graphic::VertexData>(vertex, data[y].vertice, uv, model, color);
+        }
     }
     // create camera
     auto camera = registry.create();

@@ -8,9 +8,21 @@
 namespace Graphic
 {
 
+  struct VertexData
+  {
+    glm::vec4 vertice;
+    glm::vec2 uv;
+    glm::mat4 transform;
+    glm::vec4 color;
+  };
+  struct Vertices
+  {
+    std::vector<VertexData> vertices;
+    Vertices(){};
+    Vertices(std::vector<VertexData> &v) : vertices(v){};
+  };
   struct Sprite
   {
-    std::vector<float> vertices;
     Texture texture;
     glm::vec4 rect;
   };

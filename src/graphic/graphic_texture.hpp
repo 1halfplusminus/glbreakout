@@ -16,7 +16,6 @@ namespace Graphic
   struct Material
   {
     unsigned int shader;
-    glm::vec3 color;
   };
   struct texture_image_loader final
       : entt::resource_loader<texture_image_loader, Graphic::Texture>

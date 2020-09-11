@@ -31,14 +31,15 @@ namespace Graphic
   {
     unsigned int id;
   };
-  struct VertexBuffers
-  {
-    std::vector<VertexBuffer> vertexBuffer;
-  };
   struct VertexBuffer
   {
     unsigned int id;
   };
+  struct VertexBuffers
+  {
+    std::vector<VertexBuffer> vertexBuffer;
+  };
+
   struct VertexArray
   {
     unsigned int id;
@@ -64,6 +65,12 @@ namespace Graphic
     std::string name;
     int location;
   };
+  struct VerticesHandle
+  {
+    std::size_t index;
+    std::size_t size;
+  };
+
 } // namespace Graphic
 
 #endif
