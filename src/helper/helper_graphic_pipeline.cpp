@@ -1,9 +1,11 @@
-#include "helper_graphic_pipeline.hpp"
-#include "ecs.h"
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <string>
+#include "helper_graphic_pipeline.hpp"
+#include "ecs.h"
+#include "component/component_render.hpp"
+#include <glm/gtc/matrix_transform.hpp>
 
 std::shared_ptr<Graphic::ShaderSource>
 Graphic::shader_source_loader::load(std::string path,
@@ -89,4 +91,38 @@ Graphic::shader_program_loader::load(std::vector<Shader> &shaders) const
               << std::endl;
   }
   return std::shared_ptr<Graphic::ShaderProgam>(new Graphic::ShaderProgam{ID});
+}
+
+glm::mat4 Graphic::create_model_matrix(const Position &position, const Transform &transform)
+{
+  // model
+  glm::mat4 model = glm::mat4(1.0f);
+  auto rotate = transform.rotate;
+  auto size = transform.size;
+  model = glm::translate(model,
+                         glm::vec3(position.value.x, position.value.y, 0.0f));
+  model =
+      glm::translate(model, glm::vec3(0.5f * size.x, 0.5f * size.y, 0.0f));
+  model =
+      glm::rotate(model, glm::radians(rotate), glm::vec3(0.0f, 0.0f, 1.0f));
+  model =
+      glm::translate(model, glm::vec3(-0.5f * size.x, -0.5f * size.y, 0.0f));
+
+  model = glm::scale(model, glm::vec3(size, 1.0f));
+  return model;
+}
+
+glm::vec2 Graphic::calculate_uv(const Sprite &sprite, const VertexData &vertex)
+{
+  float offsetX =
+      ((2 * (sprite.rect.x)) + 1) / (2 * sprite.texture.width);
+  float offsetY =
+      ((2 * (sprite.rect.y)) + 1) / (2 * sprite.texture.height);
+  float ux = ((2 * (sprite.rect.z)) + 1) / (2 * sprite.texture.width);
+  float uy =
+      ((2 * (sprite.rect.w)) + 1) / (2 * sprite.texture.height);
+  glm::vec2 uv;
+  uv.x = (vertex.vertice.x * ux) + offsetX;
+  uv.y = (vertex.vertice.y * uy) + offsetY;
+  return uv;
 }

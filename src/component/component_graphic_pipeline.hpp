@@ -70,6 +70,11 @@ namespace Graphic
     std::size_t index;
     std::size_t size;
   };
+  struct RenderGroup
+  {
+    entt::hashed_string shader;
+    entt::hashed_string texture;
+  };
 
 } // namespace Graphic
 

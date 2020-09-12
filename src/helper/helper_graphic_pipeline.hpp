@@ -8,7 +8,7 @@
 #include "ecs.h"
 #include <iostream>
 #include "string.h"
-
+#include "component/component_render.hpp"
 namespace Graphic
 {
   struct shader_source_loader final
@@ -28,7 +28,8 @@ namespace Graphic
     std::shared_ptr<Graphic::ShaderProgam>
     load(std::vector<Shader> &shaders) const;
   };
-
+  glm::mat4 create_model_matrix(const Position &position, const Transform &transform);
+  glm::vec2 calculate_uv(const Sprite &sprite, const VertexData &vertex);
 } // namespace Graphic
 
 #endif

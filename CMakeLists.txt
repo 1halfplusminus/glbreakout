@@ -45,7 +45,6 @@ set(HEADER_FILES
 ./src/graphic/graphic_texture.hpp 
 ./src/graphic/graphic_texture.cpp 
 ./src/component/component_graphic_pipeline.hpp 
-./src/component/component_graphic_pipeline.cpp 
 ./src/component/component_render.hpp 
 "./src/system/system_graphic_pipeline.hpp" 
 "./src/system/system_graphic_pipeline.cpp" 
@@ -75,6 +74,7 @@ target_link_libraries(glbreakout libs ${ALL_LIBS}  )
 file(COPY "./shader" DESTINATION  "./Debug")
 file(COPY "./texture" DESTINATION  "./Debug")
 file(COPY "./fonts" DESTINATION  "./Debug")
+file(COPY "./assets" DESTINATION  "./Debug")
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
