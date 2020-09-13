@@ -10,6 +10,8 @@
 #include "game.h"
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
+void key_callback(GLFWwindow *window, int key, int scancode, int action,
+                  int mods);
 
 int main()
 {
@@ -28,7 +30,7 @@ int main()
     return -1;
   }
   glfwMakeContextCurrent(window);
-  glfwSwapInterval(0);
+  /*   glfwSwapInterval(0); */
   glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
   // INIT GLAD
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -36,23 +38,28 @@ int main()
     std::cout << "Failed to initialize GLAD" << std::endl;
     return -1;
   }
-  glfwMakeContextCurrent(window);
-  glfwSwapInterval(0);
-
-  // Create our registry and initialize the game
-  entt::registry registry;
-  Game::init(registry, SCR_WIDTH, SCR_HEIGHT);
+  // Create our registry
+  auto registry = std::make_unique<entt::registry>();
+  // initialize the game
+  Game::init(*registry, SCR_WIDTH, SCR_HEIGHT);
 
   auto lastFrame = glfwGetTime();
+
+  glfwSetWindowUserPointer(window, registry.get());
+
+  glfwSetKeyCallback(window, [](GLFWwindow *window, int key, int scancode,
+                                int action, int mods) {
+    auto registry = static_cast<Registry *>(glfwGetWindowUserPointer(window));
+    Game::processInput(*registry, key);
+  });
   while (!glfwWindowShouldClose(window))
   {
     auto currentFrame = glfwGetTime();
     auto deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
 
-    Game::processInput(window, registry, lastFrame);
-    Game::update(registry, lastFrame);
-    Game::render(registry);
+    Game::update(*registry, static_cast<float>(deltaTime));
+    Game::render(*registry);
 
     glfwSwapBuffers(window);
     glfwPollEvents();

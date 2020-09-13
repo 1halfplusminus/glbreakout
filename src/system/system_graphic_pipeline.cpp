@@ -16,14 +16,19 @@ namespace Graphic
     entt::registry graphicRegistry;
     void handle_error_context()
     {
-      throw std::invalid_argument::invalid_argument("render context not initialized !");
+      throw std::invalid_argument::invalid_argument(
+          "render context not initialized !");
     }
     void init_context(entt::registry &registry)
     {
-      graphicRegistry.set<RenderContext>();
+      auto &context = graphicRegistry.set<RenderContext>();
+      context.position_observer = std::unique_ptr<entt::observer>(
+          new entt::observer(registry, entt::collector.update<Position>()
+                                           .where<RenderGroupHandle, Transform>()));
     }
 
-    void create_vertex_array(entt::registry &registry, unsigned int &vao, unsigned int &vbo)
+    void create_vertex_array(entt::registry &registry, unsigned int &vao,
+                             unsigned int &vbo)
     {
       glGenVertexArrays(1, &vao);
       glBindVertexArray(vao);
@@ -48,15 +53,17 @@ namespace Graphic
       for (unsigned int i = 0; i < 4; i++)
       {
         glEnableVertexAttribArray(3 + i);
-        glVertexAttribPointer(3 + i, 4, GL_FLOAT, GL_FALSE, sizeof(VertexData),
-                              (void *)(offsetof(VertexData, transform) + (sizeof(glm::vec4) * i)));
+        glVertexAttribPointer(
+            3 + i, 4, GL_FLOAT, GL_FALSE, sizeof(VertexData),
+            (void *)(offsetof(VertexData, transform) + (sizeof(glm::vec4) * i)));
       }
       glBindBuffer(GL_ARRAY_BUFFER, 0);
       glBindVertexArray(0);
     }
     void upload_group_data(entt::registry &registry)
     {
-      auto vbos = registry.view<entt::tag<vbo_tag>, VertexBuffer>().raw<VertexBuffer>();
+      auto vbos =
+          registry.view<entt::tag<vbo_tag>, VertexBuffer>().raw<VertexBuffer>();
       auto vertex_data = registry.view<VertexData>();
       if (vertex_data.size() > 0)
       {
@@ -77,40 +84,117 @@ namespace Graphic
       registry.emplace<entt::tag<vao_tag>>(groupVertexArray);
       registry.emplace<entt::tag<vbo_tag>>(groupVertexArray);
     }
-    template <typename Type>
-    void stamp(const entt::registry &from, const entt::entity src, entt::registry &to, const entt::entity dst)
+    void render_sprites(entt::registry &registry)
     {
-      to.emplace_or_replace<Type>(dst, from.get<Type>(src));
+      if (auto *ptr = graphicRegistry.try_ctx<RenderContext>(); ptr)
+      {
+        std::set<int> renderGroupToUpdate;
+        auto toRender = registry.group<RenderSprite, Position, Transform>();
+        for (auto [spriteEntity, renderSprite, position, transform] :
+             toRender.proxy())
+        {
+          auto &groupRegistry =
+              *ptr->render_group_registry[renderSprite.group.index].get();
+          std::vector<Graphic::VertexData> data{
+              Graphic::VertexData{glm::vec4(0.0f, 1.0f, 0.0f, 1.0f)},
+              Graphic::VertexData{glm::vec4(1.0f, 0.0f, 1.0f, 0.0f)},
+              Graphic::VertexData{glm::vec4(0.0f, 0.0f, 0.0f, 0.0f)},
+              Graphic::VertexData{glm::vec4(0.0f, 1.0f, 0.0f, 1.0f)},
+              Graphic::VertexData{glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)},
+              Graphic::VertexData{glm::vec4(1.0f, 0.0f, 1.0f, 0.0f)}};
+          for (int y = 0; y < data.size(); y++)
+          {
+            auto vertex = groupRegistry.create();
+            glm::vec2 uv = Graphic::calculate_uv(renderSprite.sprite, data[y]);
+            // model
+            glm::mat4 model = Graphic::create_model_matrix(position, transform);
+            groupRegistry.emplace<Graphic::VertexData>(vertex, data[y].vertice, uv,
+                                                       model, renderSprite.color, spriteEntity);
+          }
+          renderGroupToUpdate.insert(renderSprite.group.index);
+          registry.remove<RenderSprite>(spriteEntity);
+          registry.emplace<RenderGroupHandle>(spriteEntity, renderSprite.group);
+        }
+        for (auto groupIndex : renderGroupToUpdate)
+        {
+          auto &groupRegistry = *ptr->render_group_registry[groupIndex].get();
+          upload_group_data(groupRegistry);
+        }
+        return;
+      }
+      handle_error_context();
+    }
+    void update_vertices(entt::registry &registry)
+    {
+      if (auto *ptr = graphicRegistry.try_ctx<RenderContext>(); ptr)
+      {
+        std::set<int> renderGroupToUpdate;
+        auto &observer = *ptr->position_observer.get();
+
+        // position updated
+        for (auto entity : observer)
+        {
+          auto renderGroup = registry.get<RenderGroupHandle>(entity);
+          auto transform = registry.get<Transform>(entity);
+          auto position = registry.get<Position>(entity);
+          auto &groupRegistry =
+              *ptr->render_group_registry[renderGroup.index].get();
+          auto verticesData = groupRegistry.view<VertexData>();
+          for (auto vEntity : verticesData)
+          {
+            groupRegistry.patch<VertexData>(vEntity, [entity,
+                                                      transform,
+                                                      position](VertexData &vData) {
+              if (vData.sprite == entity)
+              {
+                glm::mat4 model = Graphic::create_model_matrix(position, transform);
+                vData.transform = model;
+              }
+            });
+          }
+
+          renderGroupToUpdate.insert(renderGroup.index);
+        }
+        for (auto groupIndex : renderGroupToUpdate)
+        {
+          auto &groupRegistry = *ptr->render_group_registry[groupIndex].get();
+          upload_group_data(groupRegistry);
+        }
+        return;
+      }
+      handle_error_context();
     }
   } // namespace
-  entt::resource_handle<Graphic::Shader> Graphic::load_shader(const entt::hashed_string key, ShaderSource &source)
+  entt::resource_handle<Graphic::Shader>
+  Graphic::load_shader(const entt::hashed_string key, ShaderSource &source)
   {
     if (auto *ptr = graphicRegistry.try_ctx<RenderContext>(); ptr)
     {
-      auto shader = ptr->shader_cache.load<Graphic::shader_loader>(
-          key, source);
+      auto shader = ptr->shader_cache.load<Graphic::shader_loader>(key, source);
       return shader;
     }
     handle_error_context();
   }
-  entt::resource_handle<Graphic::ShaderProgam> Graphic::load_shader_program(const entt::hashed_string key, std::vector<Graphic::Shader> &shaders)
+  entt::resource_handle<Graphic::ShaderProgam>
+  Graphic::load_shader_program(const entt::hashed_string key,
+                               std::vector<Graphic::Shader> &shaders)
   {
     if (auto *ptr = graphicRegistry.try_ctx<RenderContext>(); ptr)
     {
-      auto shader = ptr->program_cache.load<Graphic::shader_program_loader>(
-          key,
-          shaders);
+      auto shader =
+          ptr->program_cache.load<Graphic::shader_program_loader>(key, shaders);
       // create a entity for the shader
       auto shader_entity = graphicRegistry.create();
-      graphicRegistry.emplace<Graphic::ShaderProgam>(shader_entity, shader.get().id);
+      graphicRegistry.emplace<Graphic::ShaderProgam>(shader_entity,
+                                                     shader.get().id);
       return shader;
     }
     handle_error_context();
   }
-  entt::resource_handle<Graphic::ShaderSource> Graphic::load_shader_source(
-      const entt::hashed_string key,
-      const std::string &path,
-      const Graphic::ShaderType type)
+  entt::resource_handle<Graphic::ShaderSource>
+  Graphic::load_shader_source(const entt::hashed_string key,
+                              const std::string &path,
+                              const Graphic::ShaderType type)
   {
     if (auto *ptr = graphicRegistry.try_ctx<RenderContext>(); ptr)
     {
@@ -120,38 +204,44 @@ namespace Graphic
     }
     handle_error_context();
   }
-  entt::resource_handle<Graphic::Image> Graphic::load_image(const entt::hashed_string key, const std::string &path,
-                                                            bool flipVertically)
+  entt::resource_handle<Graphic::Image>
+  Graphic::load_image(const entt::hashed_string key, const std::string &path,
+                      bool flipVertically)
   {
     if (auto *ptr = graphicRegistry.try_ctx<RenderContext>(); ptr)
     {
-      auto image = ptr->image_cache.load<Graphic::image_loader>(key,
-                                                                path, flipVertically);
+      auto image =
+          ptr->image_cache.load<Graphic::image_loader>(key, path, flipVertically);
       return image;
     }
     handle_error_context();
   }
-  entt::resource_handle<Graphic::Texture> Graphic::load_texture(const entt::hashed_string key, Image &image)
+  entt::resource_handle<Graphic::Texture>
+  Graphic::load_texture(const entt::hashed_string key, Image &image)
   {
     if (auto *ptr = graphicRegistry.try_ctx<RenderContext>(); ptr)
     {
-      auto &texture = ptr->texture_cache.load<Graphic::texture_image_loader>(
-          key, image);
+      auto &texture =
+          ptr->texture_cache.load<Graphic::texture_image_loader>(key, image);
       return texture;
     }
     handle_error_context();
   }
-  RenderGroupHandle Graphic::create_render_group(const entt::hashed_string &shader, const entt::hashed_string &texture)
+  RenderGroupHandle
+  Graphic::create_render_group(const entt::hashed_string &shader,
+                               const entt::hashed_string &texture)
   {
     if (auto *ptr = graphicRegistry.try_ctx<RenderContext>(); ptr)
     {
       auto &v_render_group_registry = ptr->render_group_registry;
-      v_render_group_registry.push_back(std::unique_ptr<entt::registry>(new entt::registry()));
+      v_render_group_registry.push_back(
+          std::unique_ptr<entt::registry>(new entt::registry()));
       auto render_group_registry = v_render_group_registry.back().get();
       auto entity = render_group_registry->create();
       render_group_registry->emplace<RenderGroup>(entity, shader, texture);
       create_vertex_array(*render_group_registry);
-      return RenderGroupHandle{static_cast<int>(v_render_group_registry.size()) - 1};
+      return RenderGroupHandle{static_cast<int>(v_render_group_registry.size()) -
+                               1};
     }
     handle_error_context();
   }
@@ -165,39 +255,6 @@ namespace Graphic
     }
     handle_error_context();
   }
-  entt::basic_handle<entt::entity> Graphic::create_sprite(RenderGroupHandle &group,
-                                                          const Sprite &sprite,
-                                                          const glm::vec3 &positionV,
-                                                          const glm::vec2 &size,
-                                                          const float &rotate,
-                                                          const glm::vec4 &color)
-  {
-    if (auto *ptr = graphicRegistry.try_ctx<RenderContext>(); ptr)
-    {
-      auto &registry = *ptr->render_group_registry[group.index].get();
-      auto spriteEntity = registry.create();
-      auto &position = registry.emplace<Graphic::Position>(spriteEntity, positionV);
-      auto &transform = registry.emplace<Graphic::Transform>(spriteEntity, rotate, size);
-      std::vector<Graphic::VertexData> data{
-          Graphic::VertexData{glm::vec4(0.0f, 1.0f, 0.0f, 1.0f)},
-          Graphic::VertexData{glm::vec4(1.0f, 0.0f, 1.0f, 0.0f)},
-          Graphic::VertexData{glm::vec4(0.0f, 0.0f, 0.0f, 0.0f)},
-          Graphic::VertexData{glm::vec4(0.0f, 1.0f, 0.0f, 1.0f)},
-          Graphic::VertexData{glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)},
-          Graphic::VertexData{glm::vec4(1.0f, 0.0f, 1.0f, 0.0f)}};
-      for (int y = 0; y < data.size(); y++)
-      {
-        auto vertex = registry.create();
-        glm::vec2 uv = Graphic::calculate_uv(sprite, data[y]);
-        // model
-        glm::mat4 model = Graphic::create_model_matrix(position, transform);
-        registry.emplace<Graphic::VertexData>(vertex, data[y].vertice, uv, model, color);
-      }
-      upload_group_data(registry);
-      return entt::basic_handle(registry, spriteEntity);
-    }
-    handle_error_context();
-  }
   void Graphic::render_group(entt::registry &registry, RenderGroup &renderGroup)
   {
     if (auto *ptr = graphicRegistry.try_ctx<RenderContext>(); ptr)
@@ -206,17 +263,19 @@ namespace Graphic
       auto vertices = registry.view<VertexData>();
       auto &shader = ptr->program_cache.handle(renderGroup.shader).get();
       auto &texture = ptr->texture_cache.handle(renderGroup.texture).get();
-      auto projectionUniformLocation = glGetUniformLocation(shader.id, "projection");
+      auto projectionUniformLocation =
+          glGetUniformLocation(shader.id, "projection");
       auto imageLocation = glGetUniformLocation(shader.id, "image");
-      auto vaos = registry.view<entt::tag<vao_tag>, VertexArray>().raw<VertexArray>();
+      auto vaos =
+          registry.view<entt::tag<vao_tag>, VertexArray>().raw<VertexArray>();
       if (vertices.size() > 0)
       {
         for (auto entity : cameras)
         {
           auto matrix = cameras.get<ProjectionMatrix>(entity);
           glUseProgram(shader.id);
-          glUniformMatrix4fv(projectionUniformLocation, 1,
-                             GL_FALSE, glm::value_ptr(matrix.value));
+          glUniformMatrix4fv(projectionUniformLocation, 1, GL_FALSE,
+                             glm::value_ptr(matrix.value));
           glActiveTexture(GL_TEXTURE0);
           glBindTexture(GL_TEXTURE_2D, texture.id);
           glUniform1i(imageLocation, 0);
@@ -251,11 +310,14 @@ namespace Graphic
     {
       for (const auto &renderGroupRegistry : ptr->render_group_registry)
       {
-        for (auto [entity, groupComponent] : renderGroupRegistry->view<RenderGroup>().proxy())
+        for (auto [entity, groupComponent] :
+             renderGroupRegistry->view<RenderGroup>().proxy())
         {
           render_group(*renderGroupRegistry, groupComponent);
         }
       }
+      render_sprites(registry);
+      update_vertices(registry);
       return;
     }
     handle_error_context();

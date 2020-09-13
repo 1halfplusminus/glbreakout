@@ -1,9 +1,9 @@
 #ifndef COMP_RENDER_HPP
 #define COMP_RENDER_HPP
 
+#include "graphic/graphic_texture.hpp"
 #include <glm/glm.hpp>
 #include <vector>
-#include "graphic/graphic_texture.hpp"
 
 namespace Graphic
 {
@@ -14,6 +14,7 @@ namespace Graphic
     glm::vec2 uv;
     glm::mat4 transform;
     glm::vec4 color;
+    entt::entity sprite;
   };
   struct Vertices
   {
