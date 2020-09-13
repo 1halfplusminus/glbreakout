@@ -1,8 +1,8 @@
 #pragma once
-#include "component/component_render.hpp"
+#include "graphic/component_render.hpp"
 #include "ecs.h"
 #include "gameplay/component_gameplay.hpp"
-#include "system/system_graphic_pipeline.hpp"
+#include "graphic/system_graphic_pipeline.hpp"
 #include <fstream>
 #include <iostream>
 #include <sstream>

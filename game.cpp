@@ -1,14 +1,14 @@
 
 
 #include "game.h"
-#include "component/component_graphic_pipeline.hpp"
-#include "component/component_render.hpp"
+#include "graphic/component_graphic_pipeline.hpp"
+#include "graphic/component_render.hpp"
 #include "gameplay/component_gameplay.hpp"
 #include "gameplay/helper_gameplay.hpp"
 #include "graphic/graphic_image.hpp"
 #include "graphic/graphic_texture.hpp"
-#include "helper/helper_graphic_pipeline.hpp"
-#include "system/system_graphic_pipeline.hpp"
+#include "graphic/helper_graphic_pipeline.hpp"
+#include "graphic/system_graphic_pipeline.hpp"
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>

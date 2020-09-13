@@ -1,6 +1,6 @@
 #include "gameplay/helper_gameplay.hpp"
 #include "gameplay/component_gameplay.hpp"
-#include "system/system_graphic_pipeline.hpp"
+#include "graphic/system_graphic_pipeline.hpp"
 #include <fstream>
 #include <iostream>
 #include <sstream>

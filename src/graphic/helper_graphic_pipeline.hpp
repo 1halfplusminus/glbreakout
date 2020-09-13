@@ -4,11 +4,11 @@
 // clang-format off
 #include <glad/glad.h>
 // clang-format on
-#include "component_graphic_pipeline.hpp"
+#include "graphic/component_graphic_pipeline.hpp"
 #include "ecs.h"
 #include <iostream>
 #include "string.h"
-#include "component/component_render.hpp"
+#include "graphic/component_render.hpp"
 namespace Graphic
 {
   struct shader_source_loader final

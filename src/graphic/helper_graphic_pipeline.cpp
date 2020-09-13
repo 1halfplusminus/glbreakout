@@ -2,9 +2,9 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-#include "helper_graphic_pipeline.hpp"
+#include "graphic/helper_graphic_pipeline.hpp"
 #include "ecs.h"
-#include "component/component_render.hpp"
+#include "graphic/component_render.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 
 std::shared_ptr<Graphic::ShaderSource>

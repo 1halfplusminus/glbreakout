@@ -1,8 +1,8 @@
-#include "system_graphic_pipeline.hpp"
-#include "component/component_render.hpp"
-#include "component_graphic_pipeline.hpp"
+#include "graphic/system_graphic_pipeline.hpp"
+#include "graphic/component_render.hpp"
+#include "graphic/component_graphic_pipeline.hpp"
 #include "graphic/graphic_texture.hpp"
-#include "helper_graphic_pipeline.hpp"
+#include "graphic/helper_graphic_pipeline.hpp"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
