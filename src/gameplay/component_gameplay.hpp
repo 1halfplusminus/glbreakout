@@ -15,6 +15,7 @@ namespace Gameplay
   struct Brick
   {
     BrickType type;
+    bool destroyed;
   };
   struct Velocity
   {
@@ -26,8 +27,6 @@ namespace Gameplay
   };
   struct Ball
   {
-    bool stuck;
-    float radius;
   };
   struct Level
   {

@@ -23,8 +23,7 @@ namespace Graphic
     {
       auto &context = graphicRegistry.set<RenderContext>();
       context.position_observer = std::unique_ptr<entt::observer>(
-          new entt::observer(registry, entt::collector.update<Position>()
-                                           .where<RenderGroupHandle, Transform>()));
+          new entt::observer(registry, entt::collector.update<Position>().update<Transform>().where<RenderGroupHandle, Transform>()));
     }
 
     void create_vertex_array(entt::registry &registry, unsigned int &vao,
@@ -70,7 +69,7 @@ namespace Graphic
         auto data = vertex_data.raw();
         glBindBuffer(GL_ARRAY_BUFFER, vbos[0].id);
         glBufferData(GL_ARRAY_BUFFER, vertex_data.size() * (sizeof(VertexData)),
-                     data, GL_STATIC_DRAW);
+                     data, GL_DYNAMIC_DRAW);
       }
     } // namespace
     void create_vertex_array(entt::registry &registry)
@@ -123,6 +122,14 @@ namespace Graphic
         return;
       }
       handle_error_context();
+    }
+    void destroy_sprites(entt::registry &registry)
+    {
+      auto view = registry.view<Destroy, RenderGroupHandle>();
+      for (auto entity : view)
+      {
+        destroy(registry, entity);
+      }
     }
     void update_vertices(entt::registry &registry)
     {
@@ -308,6 +315,7 @@ namespace Graphic
   {
     if (auto *ptr = graphicRegistry.try_ctx<RenderContext>(); ptr)
     {
+      destroy_sprites(registry);
       for (const auto &renderGroupRegistry : ptr->render_group_registry)
       {
         for (auto [entity, groupComponent] :
@@ -321,5 +329,42 @@ namespace Graphic
       return;
     }
     handle_error_context();
-  } // namespace Graphic
+  }
+  void Graphic::destroy(entt::registry &registry, entt::entity entity)
+  {
+    if (auto *ptr = graphicRegistry.try_ctx<RenderContext>(); ptr)
+    {
+      std::set<int> renderGroupToUpdate;
+      if (registry.has<RenderGroupHandle>(entity))
+      {
+        auto renderGroup = registry.get<RenderGroupHandle>(entity);
+        auto transform = registry.get<Transform>(entity);
+        auto position = registry.get<Position>(entity);
+        auto &groupRegistry =
+            *ptr->render_group_registry[renderGroup.index].get();
+
+        auto &observer = *ptr->position_observer.get();
+
+        auto verticesData = groupRegistry.view<VertexData>();
+        for (auto vEntity : verticesData)
+        {
+          auto vData = groupRegistry.get<VertexData>(vEntity);
+          if (vData.sprite == entity)
+          {
+            groupRegistry.destroy(vEntity);
+            renderGroupToUpdate.insert(renderGroup.index);
+          }
+        }
+        for (auto groupIndex : renderGroupToUpdate)
+        {
+          auto &groupRegistry = *ptr->render_group_registry[groupIndex].get();
+          upload_group_data(groupRegistry);
+        }
+        registry.remove_if_exists<Sprite, RenderGroupHandle, Position>(entity);
+      }
+
+      return;
+    }
+    handle_error_context();
+  }
 } // namespace Graphic

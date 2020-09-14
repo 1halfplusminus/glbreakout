@@ -7,6 +7,8 @@
 #include <vector>
 #include "game.h"
 #include <GLFW/glfw3.h>
+#include "physic/component_physic.hpp"
+#include <glm/gtc/matrix_transform.hpp>
 namespace Gameplay
 {
 
@@ -14,6 +16,27 @@ namespace Gameplay
   {
 
     entt::registry gamePlayRegistry;
+    Direction vector_direction(glm::vec2 target)
+    {
+      glm::vec2 compass[] = {
+          glm::vec2(0.0f, 1.0f),  // up
+          glm::vec2(1.0f, 0.0f),  // right
+          glm::vec2(0.0f, -1.0f), // down
+          glm::vec2(-1.0f, 0.0f)  // left
+      };
+      float max = 0.0f;
+      unsigned int best_match = -1;
+      for (unsigned int i = 0; i < 4; i++)
+      {
+        float dot_product = glm::dot(glm::normalize(target), compass[i]);
+        if (dot_product > max)
+        {
+          max = dot_product;
+          best_match = i;
+        }
+      }
+      return (Direction)best_match;
+    }
     void handle_error_context()
     {
       std::cout << "gameplay context not initialized !";
@@ -51,7 +74,7 @@ namespace Gameplay
                                                          -ballRadius * 2.0f, 0.0f);
 
         auto ball = registry.create();
-        registry.emplace<Ball>(ball, true, ballRadius);
+        registry.emplace<Ball>(ball);
         registry.emplace<Graphic::Position>(ball, pos);
         registry.emplace<Graphic::Transform>(ball, 0.0f, size);
         registry.emplace<Graphic::RenderSprite>(ball, ptr->ball_sprite,
@@ -59,6 +82,8 @@ namespace Gameplay
                                                 glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
         registry.emplace<Velocity>(ball, glm::vec3(100.0f, -350.0f, 0.0f));
         registry.emplace<Movable>(ball, movable.speed);
+        registry.emplace<Physic::RigidBody>(ball, 1 << 0, 1 << 1);
+        registry.emplace<Physic::SphereCollider>(ball, ballRadius);
         return;
       }
       handle_error_context();
@@ -81,6 +106,8 @@ namespace Gameplay
                                                 ptr->player_render_group,
                                                 glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
         registry.emplace<Movable>(player, glm::vec3(500, 0, 0));
+        registry.emplace<Physic::RigidBody>(player, 1 << 2, 1 << 0);
+        registry.emplace<Physic::AABB>(player, playerPos + glm::vec3(PLAYER_SIZE, 0), playerPos);
         return;
       }
       handle_error_context();
@@ -100,6 +127,114 @@ namespace Gameplay
         return;
       }
       handle_error_context();
+    }
+    void on_ball_player_collision(entt::registry &registry, entt::entity a, entt::entity b)
+    {
+      if (registry.has<Ball>(a) && (registry.has<entt::tag<player_tag>>(b)))
+      {
+        auto aOtherPosition = registry.get<Graphic::Position>(b);
+        auto ballPosition = registry.get<Graphic::Position>(a);
+        auto balLTransform = registry.get<Graphic::Transform>(a);
+        auto otherTransform = registry.get<Graphic::Transform>(b);
+        auto velocity = registry.get<Velocity>(a);
+        auto sphere = registry.get<Physic::SphereCollider>(a);
+
+        auto ballCenter = ballPosition.value + (glm::vec3(balLTransform.size, 1.0f) / glm::vec3(2));
+        auto aOtherCenter = aOtherPosition.value + (glm::vec3(otherTransform.size, 1.0f) / glm::vec3(2));
+        float distance = (ballPosition.value.x + sphere.radius) - aOtherCenter.x;
+        float percentage = distance / (otherTransform.size.x / 2.0f);
+
+        float strength = 2.0f;
+        glm::vec2 oldVelocity = velocity.value;
+        glm::vec3 velocityInitial(100.0f, -350.0f, 0.0f);
+        velocity.value.x = velocityInitial.x * percentage * strength;
+        velocity.value.y = -velocity.value.y;
+        velocity.value = glm::normalize(velocity.value) * glm::length(oldVelocity);
+        registry.patch<Velocity>(a, [velocity](Velocity &v) {
+          v.value = velocity.value;
+        });
+      }
+    }
+    void on_ball_brick_collision(entt::registry &registry, entt::entity a, entt::entity b)
+    {
+      if (registry.has<Ball>(a) && registry.has<Brick>(b))
+      {
+        auto brick = registry.get<Brick>(b);
+        if (brick.type != BrickType::SOLID)
+        {
+          registry.patch<Brick>(b, [](Brick &brick) {
+            brick.destroyed = true;
+          });
+          registry.emplace<Graphic::Destroy>(b);
+          registry.remove_if_exists<Physic::RigidBody>(b);
+        }
+      }
+      if (registry.has<Ball>(a) && (registry.has<Brick>(b)))
+      {
+        auto aOtherPosition = registry.get<Graphic::Position>(b);
+        auto ballPosition = registry.get<Graphic::Position>(a);
+        auto balLTransform = registry.get<Graphic::Transform>(a);
+        auto otherTransform = registry.get<Graphic::Transform>(b);
+        auto velocity = registry.get<Velocity>(a);
+        auto sphere = registry.get<Physic::SphereCollider>(a);
+        auto ballCenter = ballPosition.value + (glm::vec3(balLTransform.size, 1.0f) / glm::vec3(2));
+        auto aOtherCenter = aOtherPosition.value + (glm::vec3(otherTransform.size, 1.0f) / glm::vec3(2));
+        glm::vec3 centers_distance = glm::normalize(aOtherCenter - ballCenter);
+        Direction dir = vector_direction(glm::vec2(centers_distance));
+        if (dir == LEFT || dir == RIGHT)
+        {
+          registry.patch<Velocity>(a, [velocity](Velocity &v) {
+            v.value.x = -v.value.x;
+          });
+          float penetrationValue = sphere.radius - std::abs(centers_distance.x);
+          if (dir == LEFT)
+          {
+            registry.patch<Graphic::Position>(a, [penetrationValue](Graphic::Position &p) {
+              p.value.x += penetrationValue;
+            });
+          }
+          else
+          {
+            registry.patch<Graphic::Position>(a, [penetrationValue](Graphic::Position &p) {
+              p.value.x -= penetrationValue;
+            });
+          }
+        }
+        else
+        {
+          registry.patch<Velocity>(a, [velocity](Velocity &v) {
+            v.value.y = -v.value.y;
+          });
+          float penetrationValue = sphere.radius - std::abs(centers_distance.y);
+          if (dir == UP)
+          {
+            registry.patch<Graphic::Position>(a, [penetrationValue](Graphic::Position &p) {
+              p.value.y -= penetrationValue;
+            });
+          }
+          else
+          {
+            registry.patch<Graphic::Position>(a, [penetrationValue](Graphic::Position &p) {
+              p.value.y += penetrationValue;
+            });
+          }
+        }
+      }
+    }
+    void on_collision(entt::registry &registry)
+    {
+      auto view = registry.view<Physic::Collision>();
+      if (view.size() > 0)
+      {
+        for (auto entity : view)
+        {
+          auto collision = view.get<Physic::Collision>(entity);
+          on_ball_brick_collision(registry, collision.a, collision.b);
+          on_ball_brick_collision(registry, collision.b, collision.a);
+          on_ball_player_collision(registry, collision.a, collision.b);
+          on_ball_player_collision(registry, collision.b, collision.a);
+        }
+      }
     }
     void ball_mouvement(entt::registry &registry)
     {
@@ -126,11 +261,11 @@ namespace Gameplay
               velocity.value.y = -velocity.value.y;
               position.value.y = 0.0f;
             }
-            else if (position.value.y + transform.size.y >= world.viewport.y)
+            /*  else if (position.value.y + transform.size.y >= world.viewport.y)
             {
               velocity.value.y = -velocity.value.y;
               position.value.y = world.viewport.y - transform.size.y;
-            }
+            } */
           });
         });
       }
@@ -143,9 +278,9 @@ namespace Gameplay
     std::shared_ptr<Level> level = std::shared_ptr<Level>(new Level());
     std::ifstream file(filePath);
     std::string line;
-    std::vector<BrickType> types = {BrickType::BREAKABLE, BrickType::BREAKABLE,
-                                    BrickType::SOLID, BrickType::SOLID,
-                                    BrickType::SOLID, BrickType::SOLID};
+    std::vector<BrickType> types = {BrickType::BREAKABLE, BrickType::SOLID,
+                                    BrickType::BREAKABLE, BrickType::BREAKABLE,
+                                    BrickType::BREAKABLE, BrickType::BREAKABLE};
     std::vector<glm::vec4> colors = {
         glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), glm::vec4(0.8f, 0.8f, 0.7f, 1.0f),
         glm::vec4(0.2f, 0.6f, 1.0f, 1.0f), glm::vec4(0.0f, 0.7f, 0.0f, 1.0f),
@@ -226,6 +361,7 @@ namespace Gameplay
   }
   void update(entt::registry &registry)
   {
+    on_collision(registry);
     ball_mouvement(registry);
   }
   entt::resource_handle<Level> load_level(entt::hashed_string &levelId,
@@ -253,12 +389,18 @@ namespace Gameplay
                           ? ptr->brick_sprite_breakable
                           : ptr->brick_sprite_solid;
         auto brick = registry.create();
+        auto pos = glm::vec3(level.positions[i], 0.0f);
+        auto size = glm::vec2(level.unit_width, level.unit_height);
         registry.emplace<Graphic::Position>(brick,
-                                            glm::vec3(level.positions[i], 0.0f));
+                                            pos);
         registry.emplace<Graphic::Transform>(
-            brick, 0.0f, glm::vec2(level.unit_width, level.unit_height));
+            brick, 0.0f, size);
         registry.emplace<Graphic::RenderSprite>(
             brick, sprite, ptr->brick_render_group, level.colors[i]);
+
+        registry.emplace<Physic::RigidBody>(brick, 1 << 1, 1 << 0);
+        registry.emplace<Physic::AABB>(brick, pos + glm::vec3(size, 0), pos);
+        registry.emplace<Brick>(brick, level.bricks[i], false);
       }
       return;
     }

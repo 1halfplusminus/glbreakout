@@ -86,6 +86,9 @@ namespace Graphic
     RenderGroupHandle group;
     glm::vec4 color;
   };
+  struct Destroy
+  {
+  };
 } // namespace Graphic
 
 #endif

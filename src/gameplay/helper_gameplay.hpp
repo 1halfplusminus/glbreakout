@@ -19,6 +19,13 @@ namespace Gameplay
   namespace
   {
 
+    enum Direction
+    {
+      UP,
+      RIGHT,
+      DOWN,
+      LEFT
+    };
     struct GameplayContext
     {
       GameState gameState;

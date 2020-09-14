@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.7)
 project(glbreakout VERSION 0.1.0)
 
-find_package(OpenGL REQUIRED)
-
 include(CTest)
 enable_testing()
 
@@ -46,10 +44,15 @@ set(HEADER_FILES
 ./src/graphic/graphic_texture.cpp 
 ./src/graphic/component_graphic_pipeline.hpp 
 ./src/graphic/component_render.hpp 
-"./src/graphic/system_graphic_pipeline.hpp" 
-"./src/graphic/system_graphic_pipeline.cpp" 
-"./src/graphic/helper_graphic_pipeline.hpp"
-"./src/graphic/helper_graphic_pipeline.cpp" 
+./src/graphic/system_graphic_pipeline.hpp
+./src/graphic/system_graphic_pipeline.cpp
+./src/graphic/helper_graphic_pipeline.hpp
+./src/graphic/helper_graphic_pipeline.cpp
+./src/physic/component_physic.hpp
+./src/physic/helper_physic.hpp
+./src/physic/helper_physic.cpp
+./src/physic/system_physic.hpp
+./src/physic/system_physic.cpp
 ./src/gameplay/component_gameplay.hpp 
 ./src/gameplay/helper_gameplay.hpp 
 ./src/gameplay/helper_gameplay.cpp 
@@ -65,11 +68,10 @@ target_include_directories(glbreakout
 	"${CMAKE_SOURCE_DIR}"
 	"${CMAKE_SOURCE_DIR}/src"
 	"${CMAKE_SOURCE_DIR}/src/graphic"
-	"${CMAKE_SOURCE_DIR}/src/system"
-	"${CMAKE_SOURCE_DIR}/src/helper"
-	"${CMAKE_SOURCE_DIR}/src/component"
+	"${CMAKE_SOURCE_DIR}/src/gameplay"
+	"${CMAKE_SOURCE_DIR}/src/physic"
 )
-target_link_libraries(glbreakout libs ${ALL_LIBS}  )
+target_link_libraries(glbreakout libs ${ALL_LIBS})
 
 file(COPY "./shader" DESTINATION  "./Debug")
 file(COPY "./texture" DESTINATION  "./Debug")

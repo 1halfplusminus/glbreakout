@@ -12,6 +12,8 @@
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include "physic/system_physic.hpp"
+#include "thread"
 
 namespace Game
 {
@@ -65,12 +67,14 @@ void Game::render(Registry &registry) {}
 void Game::update(Registry &registry, float dt)
 {
   game_update(registry, dt);
+  Physic::update(registry, dt);
   Gameplay::update(registry);
   Graphic::update(registry, dt);
 }
 void Game::init(Registry &registry, float w, float h)
 {
   init_game(registry, w, h);
+  Physic::init(registry);
   Graphic::init(registry);
   Gameplay::init(registry, w, h);
   auto main_vs_source = Graphic::load_shader_source(

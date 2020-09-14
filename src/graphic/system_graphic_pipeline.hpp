@@ -46,6 +46,7 @@ namespace Graphic
   void render_group(entt::basic_handle<entt::entity> &group);
   void add_projection_matrix(glm::mat4 projection);
   void render_sprite(entt::registry &registry);
+  void destroy(entt::registry &registry, entt::entity e);
 } // namespace Graphic
 
 #endif
