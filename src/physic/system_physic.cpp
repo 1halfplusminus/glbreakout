@@ -64,6 +64,7 @@ namespace Physic
             exit(1);
         }
     } // namespace
+
     void init(entt::registry &registry)
     {
         auto &context = registry.set<PhysicContext>();

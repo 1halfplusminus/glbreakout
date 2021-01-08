@@ -74,9 +74,10 @@ void Game::update(Registry &registry, float dt)
 void Game::init(Registry &registry, float w, float h)
 {
   init_game(registry, w, h);
-  Physic::init(registry);
   Graphic::init(registry);
   Gameplay::init(registry, w, h);
+  Physic::init(registry);
+
   auto main_vs_source = Graphic::load_shader_source(
       "main_vs"_hs, "./shader/main.vect", Graphic::VertexShader);
   auto main_fs_source = Graphic::load_shader_source(

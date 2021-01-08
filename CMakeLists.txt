@@ -8,11 +8,12 @@ INCLUDE_DIRECTORIES(./glfw/include)
 INCLUDE_DIRECTORIES(./glad/include)
 INCLUDE_DIRECTORIES(./stb)
 
-
-add_subdirectory (glfw)
+add_subdirectory (box2d)
+# add_subdirectory (glfw)
 add_subdirectory (glm)
 add_subdirectory (freetype2)
 add_subdirectory (entt)
+add_subdirectory (assimp)
 
 # set variables that are needed
 set(ZLIB_LIBRARIES zlibstatic)
@@ -21,7 +22,7 @@ set(BUILD_STATIC_LIB ON)
 set(BUILD_ASSIMP_TOOLS  ON)
 set(ASSIMP_BUILD_STATIC_LIB ON)
 
-add_subdirectory (assimp)
+
 
 set(ALL_LIBS
 	${OPENGL_LIBRARY}
@@ -30,6 +31,7 @@ set(ALL_LIBS
 	assimp
 	freetype
 	EnTT
+	box2d
 )
 
 set(HEADER_FILES 
@@ -52,7 +54,8 @@ set(HEADER_FILES
 ./src/physic/helper_physic.hpp
 ./src/physic/helper_physic.cpp
 ./src/physic/system_physic.hpp
-./src/physic/system_physic.cpp
+#./src/physic/system_physic.cpp
+./src/physic/system_physic_box2D.cpp
 ./src/gameplay/component_gameplay.hpp 
 ./src/gameplay/helper_gameplay.hpp 
 ./src/gameplay/helper_gameplay.cpp 

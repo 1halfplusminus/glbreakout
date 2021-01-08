@@ -13,8 +13,7 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void key_callback(GLFWwindow *window, int key, int scancode, int action,
                   int mods);
 
-int main()
-{
+int main() {
   // Init GLFW
   glfwInit();
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -22,9 +21,8 @@ int main()
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
   GLFWwindow *window =
-      glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Get Started", NULL, NULL);
-  if (window == NULL)
-  {
+      glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Breakout", NULL, NULL);
+  if (window == NULL) {
     std::cout << "Failed to create GLFW window" << std::endl;
     glfwTerminate();
     return -1;
@@ -33,8 +31,7 @@ int main()
   /*   glfwSwapInterval(0); */
   glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
   // INIT GLAD
-  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-  {
+  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
     std::cout << "Failed to initialize GLAD" << std::endl;
     return -1;
   }
@@ -52,8 +49,7 @@ int main()
     auto registry = static_cast<Registry *>(glfwGetWindowUserPointer(window));
     Game::processInput(*registry, key);
   });
-  while (!glfwWindowShouldClose(window))
-  {
+  while (!glfwWindowShouldClose(window)) {
     auto currentFrame = glfwGetTime();
     auto deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
@@ -68,7 +64,6 @@ int main()
   return 0;
 }
 
-void framebuffer_size_callback(GLFWwindow *window, int width, int height)
-{
+void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
   glViewport(0, 0, width, height);
 }
