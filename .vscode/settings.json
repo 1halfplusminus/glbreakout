@@ -84,6 +84,8 @@
         "atomic": "cpp",
         "optional": "cpp",
         "queue": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "compare": "cpp",
+        "csignal": "cpp"
     }
 }

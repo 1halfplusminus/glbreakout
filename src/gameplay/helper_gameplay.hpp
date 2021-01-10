@@ -10,6 +10,10 @@
 namespace Gameplay
 {
 
+  struct BreakoutGame
+  {
+    entt::hashed_string currentLevel;
+  };
   enum GameState
   {
     GAME_ACTIVE,
