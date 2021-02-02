@@ -114,6 +114,10 @@ glm::mat4 Graphic::create_model_matrix(const Position &position, const Transform
 
 glm::vec2 Graphic::calculate_uv(const Sprite &sprite, const VertexData &vertex)
 {
+  return calculate_uv(sprite, vertex.vertice);
+}
+glm::vec2 Graphic::calculate_uv(const Sprite &sprite, glm::vec2 vertice)
+{
   float offsetX =
       ((2 * (sprite.rect.x)) + 1) / (2 * sprite.texture.width);
   float offsetY =
@@ -122,7 +126,7 @@ glm::vec2 Graphic::calculate_uv(const Sprite &sprite, const VertexData &vertex)
   float uy =
       ((2 * (sprite.rect.w)) + 1) / (2 * sprite.texture.height);
   glm::vec2 uv;
-  uv.x = (vertex.vertice.x * ux) + offsetX;
-  uv.y = (vertex.vertice.y * uy) + offsetY;
+  uv.x = (vertice.x * ux) + offsetX;
+  uv.y = (vertice.y * uy) + offsetY;
   return uv;
 }

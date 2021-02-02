@@ -9,6 +9,7 @@
 #include "graphic/graphic_texture.hpp"
 #include "graphic/helper_graphic_pipeline.hpp"
 #include "graphic/system_graphic_pipeline.hpp"
+#include "graphic/system_particule.hpp"
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -70,13 +71,21 @@ void Game::update(Registry &registry, float dt)
   Physic::update(registry, dt);
   Gameplay::update(registry);
   Graphic::update(registry, dt);
+  Graphic::Particule::update(registry, dt);
 }
 void Game::init(Registry &registry, float w, float h)
 {
   init_game(registry, w, h);
   Physic::init(registry);
   Graphic::init(registry);
+
+  auto atlas_image =
+      Graphic::load_image("atlas"_hs, "./texture/atlas.png", false);
+  Graphic::load_texture("atlas"_hs, atlas_image);
+
+  Graphic::Particule::init(registry);
   Gameplay::init(registry, w, h);
+
   auto main_vs_source = Graphic::load_shader_source(
       "main_vs"_hs, "./shader/main.vect", Graphic::VertexShader);
   auto main_fs_source = Graphic::load_shader_source(
@@ -87,6 +96,7 @@ void Game::init(Registry &registry, float w, float h)
 
   auto main_shader_r = Graphic::load_shader_program(
       "main"_hs, std::vector<Graphic::Shader>{main_vs, main_fs});
+
   Graphic::add_projection_matrix(glm::ortho(
       0.0f, static_cast<float>(w), static_cast<float>(h), 0.0f, -1.0f, 1.0f));
 }

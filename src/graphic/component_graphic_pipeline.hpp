@@ -86,6 +86,16 @@ namespace Graphic
     RenderGroupHandle group;
     glm::vec4 color;
   };
+  struct Particle
+  {
+    glm::vec2 position, velocity;
+    glm::vec4 color;
+    float life;
+
+    Particle()
+        : position(0.0f), velocity(0.0f), color(1.0f), life(0.0f) {}
+  };
+
   struct Destroy
   {
   };

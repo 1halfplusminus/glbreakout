@@ -48,6 +48,8 @@ set(HEADER_FILES
 ./src/graphic/system_graphic_pipeline.cpp
 ./src/graphic/helper_graphic_pipeline.hpp
 ./src/graphic/helper_graphic_pipeline.cpp
+./src/graphic/system_particule.hpp
+./src/graphic/system_particule.cpp
 ./src/physic/component_physic.hpp
 ./src/physic/helper_physic.hpp
 ./src/physic/helper_physic.cpp

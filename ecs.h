@@ -5,7 +5,7 @@
 
 using Registry = entt::registry;
 using Entity = Registry::entity_type;
-
+using namespace entt::literals;
 static const Entity NULL_ENTITY = entt::null;
 
 #endif

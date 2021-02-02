@@ -14,6 +14,7 @@ namespace Graphic
     constexpr entt::hashed_string vbo_tag = entt::hashed_string("vbo");
     constexpr entt::hashed_string vao_tag = entt::hashed_string("vao");
     entt::registry graphicRegistry;
+
     void handle_error_context()
     {
       throw std::invalid_argument::invalid_argument(
@@ -32,7 +33,6 @@ namespace Graphic
       glGenVertexArrays(1, &vao);
       glBindVertexArray(vao);
       glGenBuffers(1, &vbo);
-      glBindVertexArray(vao);
 
       // vertex
       glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -62,7 +62,7 @@ namespace Graphic
     void upload_group_data(entt::registry &registry)
     {
       auto vbos =
-          registry.view<entt::tag<vbo_tag>, VertexBuffer>().raw<VertexBuffer>();
+          registry.view<VertexBuffer>().raw();
       auto vertex_data = registry.view<VertexData>();
       if (vertex_data.size() > 0)
       {
@@ -70,6 +70,7 @@ namespace Graphic
         glBindBuffer(GL_ARRAY_BUFFER, vbos[0].id);
         glBufferData(GL_ARRAY_BUFFER, vertex_data.size() * (sizeof(VertexData)),
                      data, GL_DYNAMIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
       }
     } // namespace
     void create_vertex_array(entt::registry &registry)
@@ -90,7 +91,7 @@ namespace Graphic
         std::set<int> renderGroupToUpdate;
         auto toRender = registry.group<RenderSprite, Position, Transform>();
         for (auto [spriteEntity, renderSprite, position, transform] :
-             toRender.proxy())
+             toRender.each())
         {
           auto &groupRegistry =
               *ptr->render_group_registry[renderSprite.group.index].get();
@@ -234,6 +235,24 @@ namespace Graphic
     }
     handle_error_context();
   }
+  entt::resource_handle<Graphic::ShaderProgam> get_shader_program(const entt::hashed_string key)
+  {
+    if (auto *ptr = graphicRegistry.try_ctx<RenderContext>(); ptr)
+    {
+      auto &shaderProgam = ptr->program_cache.handle(key);
+      return shaderProgam;
+    }
+    handle_error_context();
+  }
+  entt::resource_handle<Graphic::Texture> get_texture(const entt::hashed_string key)
+  {
+    if (auto *ptr = graphicRegistry.try_ctx<RenderContext>(); ptr)
+    {
+      auto &texture = ptr->texture_cache.handle(key);
+      return texture;
+    }
+    handle_error_context();
+  }
   RenderGroupHandle
   Graphic::create_render_group(const entt::hashed_string &shader,
                                const entt::hashed_string &texture)
@@ -262,7 +281,7 @@ namespace Graphic
     }
     handle_error_context();
   }
-  void Graphic::render_group(entt::registry &registry, RenderGroup &renderGroup)
+  void Graphic::render_group(entt::registry &registry, const RenderGroup &renderGroup)
   {
     if (auto *ptr = graphicRegistry.try_ctx<RenderContext>(); ptr)
     {
@@ -274,7 +293,7 @@ namespace Graphic
           glGetUniformLocation(shader.id, "projection");
       auto imageLocation = glGetUniformLocation(shader.id, "image");
       auto vaos =
-          registry.view<entt::tag<vao_tag>, VertexArray>().raw<VertexArray>();
+          registry.view<VertexArray>().raw();
       if (vertices.size() > 0)
       {
         for (auto entity : cameras)
@@ -289,6 +308,7 @@ namespace Graphic
           glBindVertexArray(vaos[0].id);
           glDrawArrays(GL_TRIANGLES, 0, vertices.size());
           glBindVertexArray(0);
+          glUseProgram(0);
         }
       }
       return;
@@ -297,12 +317,19 @@ namespace Graphic
   }
   void Graphic::render_group(entt::basic_handle<entt::entity> &group)
   {
-    render_group(group.registry(), group.get<RenderGroup>());
+    auto test = group.registry();
+    auto test2 = group.get<RenderGroup>();
+    render_group(*test, test2);
   }
   void Graphic::add_projection_matrix(glm::mat4 projection)
   {
     auto camera = graphicRegistry.create();
     graphicRegistry.emplace<Graphic::ProjectionMatrix>(camera, projection);
+  }
+  ProjectionMatrix projection_matrix()
+  {
+    auto e = graphicRegistry.view<Graphic::ProjectionMatrix>().front();
+    return graphicRegistry.get<Graphic::ProjectionMatrix>(e);
   }
   void Graphic::init(entt::registry &registry)
   {
@@ -319,7 +346,7 @@ namespace Graphic
       for (const auto &renderGroupRegistry : ptr->render_group_registry)
       {
         for (auto [entity, groupComponent] :
-             renderGroupRegistry->view<RenderGroup>().proxy())
+             renderGroupRegistry->view<RenderGroup>().each())
         {
           render_group(*renderGroupRegistry, groupComponent);
         }

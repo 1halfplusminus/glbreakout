@@ -39,6 +39,10 @@ namespace Graphic
     glm::vec2 size;
   };
 
+  struct Target
+  {
+    entt::entity target;
+  };
 } // namespace Graphic
 
 #endif

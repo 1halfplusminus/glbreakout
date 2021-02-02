@@ -97,6 +97,11 @@ namespace Gameplay
         registry.emplace<Movable>(ball, movable.speed);
         registry.emplace<Physic::RigidBody>(ball, 1 << 0, 1 << 1);
         registry.emplace<Physic::SphereCollider>(ball, ballRadius);
+        auto particles = registry.view<Graphic::Particle>();
+        for (auto [entity, particule] : particles.each())
+        {
+          registry.emplace<Graphic::Target>(entity, ball);
+        }
         return;
       }
       handle_error_context();
@@ -436,12 +441,11 @@ namespace Gameplay
   {
     auto &context = gamePlayRegistry.set<GameplayContext>();
 
-    auto atlas_image =
-        Graphic::load_image("atlas"_hs, "./texture/atlas.png", false);
     auto backgroud_image =
         Graphic::load_image("backgroud"_hs, "./texture/background.jpg", false);
 
-    auto &atlas = Graphic::load_texture("atlas"_hs, atlas_image);
+    auto &atlas = Graphic::get_texture("atlas"_hs).get();
+
     auto &background_texture =
         Graphic::load_texture("background"_hs, backgroud_image);
 
@@ -453,11 +457,11 @@ namespace Gameplay
         Graphic::create_render_group("main"_hs, "atlas"_hs);
 
     context.brick_sprite_solid =
-        Graphic::Sprite({atlas, glm::vec4(0, 512, 128, 128)});
+        Graphic::Sprite({atlas, glm::vec4(128, 0, 128, 128)});
     context.brick_sprite_breakable =
-        Graphic::Sprite({atlas, glm::vec4(128, 512, 128, 128)});
-    context.player_sprite = Graphic::Sprite({atlas, glm::vec4(0, 640, 512, 128)});
-    context.ball_sprite = Graphic::Sprite({atlas, glm::vec4(0, 0, 512, 512)});
+        Graphic::Sprite({atlas, glm::vec4(0, 0, 128, 128)});
+    context.player_sprite = Graphic::Sprite({atlas, glm::vec4(256, 0, 512, 128)});
+    context.ball_sprite = Graphic::Sprite({atlas, glm::vec4(500, 126, 512, 512)});
 
     context.backgroud_sprite = Graphic::Sprite(
         {background_texture, glm::vec4(0, 0, background_texture.get().width,

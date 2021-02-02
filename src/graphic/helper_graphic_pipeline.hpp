@@ -30,6 +30,7 @@ namespace Graphic
   };
   glm::mat4 create_model_matrix(const Position &position, const Transform &transform);
   glm::vec2 calculate_uv(const Sprite &sprite, const VertexData &vertex);
+  glm::vec2 calculate_uv(const Sprite &sprite, glm::vec2 vertice);
 } // namespace Graphic
 
 #endif

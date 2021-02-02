@@ -41,12 +41,15 @@ namespace Graphic
                       std::vector<Graphic::Shader> &shaders);
   RenderGroupHandle create_render_group(const entt::hashed_string &shader,
                                         const entt::hashed_string &texture);
+  entt::resource_handle<Graphic::ShaderProgam> get_shader_program(const entt::hashed_string key);
+  entt::resource_handle<Graphic::Texture> get_texture(const entt::hashed_string key);
   void clear_render_group(RenderGroupHandle group);
-  void render_group(entt::registry &registry, RenderGroup &renderGroup);
+  void render_group(entt::registry &registry, const RenderGroup &renderGroup);
   void render_group(entt::basic_handle<entt::entity> &group);
   void add_projection_matrix(glm::mat4 projection);
   void render_sprite(entt::registry &registry);
   void destroy(entt::registry &registry, entt::entity e);
+  ProjectionMatrix projection_matrix();
 } // namespace Graphic
 
 #endif
