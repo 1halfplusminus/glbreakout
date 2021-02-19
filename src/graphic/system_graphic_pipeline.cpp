@@ -17,6 +17,7 @@ namespace Graphic
 
     void handle_error_context()
     {
+      std::cout << "render context not initialized !" << std::endl;
       throw std::invalid_argument::invalid_argument(
           "render context not initialized !");
     }
@@ -34,8 +35,8 @@ namespace Graphic
       glBindVertexArray(vao);
       glGenBuffers(1, &vbo);
 
-      // vertex
       glBindBuffer(GL_ARRAY_BUFFER, vbo);
+      // vertex
       glEnableVertexAttribArray(0);
       glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(VertexData),
                             (void *)0);
@@ -56,8 +57,25 @@ namespace Graphic
             3 + i, 4, GL_FLOAT, GL_FALSE, sizeof(VertexData),
             (void *)(offsetof(VertexData, transform) + (sizeof(glm::vec4) * i)));
       }
+
       glBindBuffer(GL_ARRAY_BUFFER, 0);
       glBindVertexArray(0);
+    }
+    void clear_group_data(entt::registry &registry)
+    {
+      auto vbos =
+          registry.view<VertexBuffer>().raw();
+      auto vertex_data = registry.view<VertexData>();
+      if (vertex_data.size() > 0)
+      {
+        /*  glBindBuffer(GL_ARRAY_BUFFER, vbos[0].id); */
+        /*  glMapBufferRange(GL_ARRAY_BUFFER, 0, vertex_data.size() * (sizeof(VertexData)),
+                         GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_INVALIDATE_RANGE_BIT); */
+        /*        glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertex_data.size(), 0, GL_DYNAMIC_DRAW); */
+        /* glMapBufferRange(GL_ARRAY_BUFFER, 0, vertex_data.size() * (sizeof(VertexData)),
+                         GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT); */
+        /*  glUnmapBuffer(GL_ARRAY_BUFFER); */
+      }
     }
     void upload_group_data(entt::registry &registry)
     {
@@ -67,9 +85,20 @@ namespace Graphic
       if (vertex_data.size() > 0)
       {
         auto data = vertex_data.raw();
+        GLint size = 0;
         glBindBuffer(GL_ARRAY_BUFFER, vbos[0].id);
-        glBufferData(GL_ARRAY_BUFFER, vertex_data.size() * (sizeof(VertexData)),
-                     data, GL_DYNAMIC_DRAW);
+        glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &size);
+        if (size > 0)
+        {
+
+          glBufferSubData(GL_ARRAY_BUFFER, 0, vertex_data.size() * (sizeof(VertexData)),
+                          data);
+        }
+        else
+        {
+          glBufferData(GL_ARRAY_BUFFER, vertex_data.size() * (sizeof(VertexData)),
+                       data, GL_STREAM_DRAW);
+        }
         glBindBuffer(GL_ARRAY_BUFFER, 0);
       }
     } // namespace
@@ -296,10 +325,10 @@ namespace Graphic
           registry.view<VertexArray>().raw();
       if (vertices.size() > 0)
       {
+        glUseProgram(shader.id);
         for (auto entity : cameras)
         {
           auto matrix = cameras.get<ProjectionMatrix>(entity);
-          glUseProgram(shader.id);
           glUniformMatrix4fv(projectionUniformLocation, 1, GL_FALSE,
                              glm::value_ptr(matrix.value));
           glActiveTexture(GL_TEXTURE0);
@@ -307,8 +336,10 @@ namespace Graphic
           glUniform1i(imageLocation, 0);
           glBindVertexArray(vaos[0].id);
           glDrawArrays(GL_TRIANGLES, 0, vertices.size());
-          glBindVertexArray(0);
+
           glUseProgram(0);
+          glBindVertexArray(0);
+          glBindTexture(GL_TEXTURE_2D, 0);
         }
       }
       return;
@@ -340,9 +371,12 @@ namespace Graphic
 
   void Graphic::update(entt::registry &registry, float dt)
   {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     if (auto *ptr = graphicRegistry.try_ctx<RenderContext>(); ptr)
     {
       destroy_sprites(registry);
+      render_sprites(registry);
+      update_vertices(registry);
       for (const auto &renderGroupRegistry : ptr->render_group_registry)
       {
         for (auto [entity, groupComponent] :
@@ -351,8 +385,15 @@ namespace Graphic
           render_group(*renderGroupRegistry, groupComponent);
         }
       }
-      render_sprites(registry);
-      update_vertices(registry);
+      auto &observer = *ptr->position_observer.get();
+
+      // position updated
+      for (auto entity : observer)
+      {
+        auto renderGroup = registry.get<RenderGroupHandle>(entity);
+        auto &groupRegistry = *ptr->render_group_registry[renderGroup.index].get();
+        clear_group_data(groupRegistry);
+      }
       return;
     }
     handle_error_context();

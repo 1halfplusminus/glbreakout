@@ -64,8 +64,11 @@ add_library(libs STATIC ./glad/src/glad.c ./ecs.h  )
 target_include_directories(libs PRIVATE ./stb ${ALL_LIBS})
 
 
-add_executable(glbreakout main.cpp ${HEADER_FILES} )
-target_include_directories(glbreakout  
+macro(MY_ADD_EXECUTABLE execName source)
+
+add_executable(${execName} ${source} ${HEADER_FILES} )
+
+target_include_directories(${execName}  
 	PRIVATE
 	"${CMAKE_SOURCE_DIR}"
 	"${CMAKE_SOURCE_DIR}/src"
@@ -73,7 +76,12 @@ target_include_directories(glbreakout
 	"${CMAKE_SOURCE_DIR}/src/gameplay"
 	"${CMAKE_SOURCE_DIR}/src/physic"
 )
-target_link_libraries(glbreakout libs ${ALL_LIBS})
+target_link_libraries(${execName} libs ${ALL_LIBS})
+
+endmacro()
+
+MY_ADD_EXECUTABLE(main main.cpp)
+MY_ADD_EXECUTABLE(playground test.cpp)
 
 file(COPY "./shader" DESTINATION  "./Debug")
 file(COPY "./texture" DESTINATION  "./Debug")

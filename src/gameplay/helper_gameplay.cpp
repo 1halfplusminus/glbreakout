@@ -135,7 +135,7 @@ namespace Gameplay
       {
         auto background = registry.create();
         registry.emplace<Graphic::Position>(background,
-                                            glm::vec4(0.0f, 0.0f, 0.0f, 0.0f));
+                                            glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
         registry.emplace<Graphic::Transform>(background, 0.0f, glm::vec2(w, h));
         registry.emplace<Graphic::RenderSprite>(background, ptr->backgroud_sprite,
                                                 ptr->backgroud_render_group,

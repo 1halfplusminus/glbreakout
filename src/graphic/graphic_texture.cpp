@@ -38,6 +38,7 @@ Graphic::texture_image_loader::load(Image &image) const
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     glGenerateMipmap(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, 0);
   }
   textureResource->id = texture;
   textureResource->width = image.width;

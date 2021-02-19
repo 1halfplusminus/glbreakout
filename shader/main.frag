@@ -5,4 +5,6 @@ in vec2 TexCoord;
 uniform sampler2D image;
 in vec4 SpriteColor;
 
-void main() { FragColor = SpriteColor * texture(image, TexCoord); }
+void main() { 
+    FragColor = SpriteColor * texture(image, TexCoord); 
+}

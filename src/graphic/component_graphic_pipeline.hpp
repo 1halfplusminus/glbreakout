@@ -26,11 +26,17 @@ namespace Graphic
   {
     unsigned int id;
     ShaderType type;
+
+  public:
+    operator int() { return id; };
   };
 
   struct ShaderProgam
   {
     unsigned int id;
+
+  public:
+    operator int() { return id; };
   };
   struct VertexBuffer
   {
