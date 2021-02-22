@@ -26,7 +26,7 @@ namespace Physic
                         auto aRigidBody = colladable.get<RigidBody>(a);
                         auto bRigidBody = colladable.get<RigidBody>(b);
                         auto sameCategory = aRigidBody.collidWith & bRigidBody.category;
-                        if (sameCategory && registry.has<AABB>(a) && registry.has<AABB>(b))
+                        if (sameCategory && registry.any_of<AABB>(a) && registry.any_of<AABB>(b))
                         {
                             auto aAABB = registry.get<AABB>(a);
                             auto bAABB = registry.get<AABB>(b);
@@ -35,7 +35,7 @@ namespace Physic
                                 registry.emplace_or_replace<Collision>(a, a, b);
                             }
                         }
-                        else if (sameCategory && registry.has<AABB>(a) && registry.has<SphereCollider>(b))
+                        else if (sameCategory && registry.any_of<AABB>(a) && registry.any_of<SphereCollider>(b))
                         {
                             auto aAABB = registry.get<AABB>(a);
                             auto bSphere = registry.get<SphereCollider>(b);
@@ -79,7 +79,7 @@ namespace Physic
         auto &observer = *ctx->position_observer;
         for (auto entity : observer)
         {
-            if (registry.has<AABB>(entity) && registry.has<Graphic::Transform>(entity))
+            if (registry.all_of<AABB, Graphic::Transform>(entity))
             {
                 registry.patch<AABB>(entity, [&registry, entity](AABB &aabb) {
                     auto transform = registry.get<Graphic::Transform>(entity);

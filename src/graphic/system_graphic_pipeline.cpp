@@ -412,7 +412,7 @@ namespace Graphic
     if (auto *ptr = graphicRegistry.try_ctx<RenderContext>(); ptr)
     {
       std::set<int> renderGroupToUpdate;
-      if (registry.has<RenderGroupHandle>(entity))
+      if (registry.any_of<RenderGroupHandle>(entity))
       {
         auto renderGroup = registry.get<RenderGroupHandle>(entity);
         auto transform = registry.get<Transform>(entity);

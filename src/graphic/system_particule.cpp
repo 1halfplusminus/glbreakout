@@ -157,7 +157,7 @@ namespace Graphic
                 auto target = registry.get<Target>(unusedParticleEntity).target;
                 if (target != entt::null)
                 {
-                    if (registry.has<Position>(target) && registry.has<Gameplay::Velocity>(target) && registry.has<Graphic::Transform>(target))
+                    if (registry.all_of<Position, Graphic::Transform, Gameplay::Velocity>(target))
                     {
                         const auto [position] = positions.get(target);
                         const auto [velocity] = velocities.get(target);

@@ -190,7 +190,7 @@ namespace Gameplay
     }
     void on_ball_player_collision(entt::registry &registry, entt::entity a, entt::entity b)
     {
-      if (registry.has<Ball>(a) && (registry.has<entt::tag<player_tag>>(b)))
+      if (registry.all_of<Ball>(a) && (registry.all_of<entt::tag<player_tag>>(b)))
       {
         auto aabb = registry.get<Physic::AABB>(b);
         auto paddleTransform = registry.get<Graphic::Transform>(b);
@@ -260,7 +260,7 @@ namespace Gameplay
     }
     void on_ball_brick_collision(entt::registry &registry, entt::entity a, entt::entity b)
     {
-      if (registry.has<Ball>(a) && registry.has<Brick>(b))
+      if (registry.all_of<Ball>(a) && registry.all_of<Brick>(b))
       {
         auto brick = registry.get<Brick>(b);
         if (brick.type != BrickType::SOLID)
@@ -272,7 +272,7 @@ namespace Gameplay
           registry.remove_if_exists<Physic::RigidBody>(b);
         }
       }
-      if (registry.has<Ball>(a) && (registry.has<Brick>(b)))
+      if (registry.all_of<Ball>(a) && (registry.all_of<Brick>(b)))
       {
         auto aOtherAABB = registry.get<Physic::AABB>(b);
         auto aOtherPosition = registry.get<Graphic::Position>(b);
