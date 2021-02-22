@@ -48,40 +48,7 @@ namespace Graphic
             particule.life = 1.0f;
             particule.velocity = velocity.value * 0.1f;
         }
-        void draw(entt::registry &registry)
-        {
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-            auto shader = Graphic::get_shader_program(shader_key).get();
 
-            auto particles = registry.view<Particle, Sprite>(entt::exclude_t<Destroy>());
-            auto projection = Graphic::projection_matrix();
-            auto offsetPosition = glGetUniformLocation(shader.id, "offset");
-            auto colorPosition = glGetUniformLocation(shader.id, "color");
-            auto imageLocation = glGetUniformLocation(shader.id, "sprite");
-            auto projectionLocation = glGetUniformLocation(shader.id, "projection");
-            glUseProgram(shader.id);
-            glUniformMatrix4fv(projectionLocation, 1, GL_FALSE,
-                               glm::value_ptr(projection.value));
-            for (auto [entity, particle, sprite] : particles.each())
-            {
-                if (particle.life > 0)
-                {
-
-                    glUniform2fv(offsetPosition, 1, glm::value_ptr(particle.position));
-                    glUniform4fv(colorPosition, 1,
-                                 glm::value_ptr(particle.color));
-
-                    glActiveTexture(GL_TEXTURE0);
-                    glBindTexture(GL_TEXTURE_2D, sprite.texture.id);
-                    glUniform1i(imageLocation, 0);
-                    glBindVertexArray(particuleVao);
-                    glDrawArrays(GL_TRIANGLES, 0, 6);
-                }
-            }
-            glBindVertexArray(0);
-            glUseProgram(0);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        }
         void init(entt::registry &registry)
         {
 
@@ -141,6 +108,40 @@ namespace Graphic
                 registry.emplace<Destroy>(particleEntity);
             }
         }
+        void render(entt::registry &registry)
+        {
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+            auto shader = Graphic::get_shader_program(shader_key).get();
+
+            auto particles = registry.view<Particle, Sprite>(entt::exclude_t<Destroy>());
+            auto projection = Graphic::projection_matrix();
+            auto offsetPosition = glGetUniformLocation(shader.id, "offset");
+            auto colorPosition = glGetUniformLocation(shader.id, "color");
+            auto imageLocation = glGetUniformLocation(shader.id, "sprite");
+            auto projectionLocation = glGetUniformLocation(shader.id, "projection");
+            glUseProgram(shader.id);
+            glUniformMatrix4fv(projectionLocation, 1, GL_FALSE,
+                               glm::value_ptr(projection.value));
+            for (auto [entity, particle, sprite] : particles.each())
+            {
+                if (particle.life > 0)
+                {
+
+                    glUniform2fv(offsetPosition, 1, glm::value_ptr(particle.position));
+                    glUniform4fv(colorPosition, 1,
+                                 glm::value_ptr(particle.color));
+
+                    glActiveTexture(GL_TEXTURE0);
+                    glBindTexture(GL_TEXTURE_2D, sprite.texture.id);
+                    glUniform1i(imageLocation, 0);
+                    glBindVertexArray(particuleVao);
+                    glDrawArrays(GL_TRIANGLES, 0, 6);
+                }
+            }
+            glBindVertexArray(0);
+            glUseProgram(0);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        }
         void update(entt::registry &registry, float dt)
         {
 
@@ -180,8 +181,8 @@ namespace Graphic
                     registry.emplace<Destroy>(entity);
                 }
             }
-            draw(registry);
         }
+
     } // namespace Particule
 
 } // namespace Graphic

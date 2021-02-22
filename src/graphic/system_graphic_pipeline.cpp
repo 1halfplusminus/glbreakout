@@ -113,7 +113,7 @@ namespace Graphic
       registry.emplace<entt::tag<vao_tag>>(groupVertexArray);
       registry.emplace<entt::tag<vbo_tag>>(groupVertexArray);
     }
-    void render_sprites(entt::registry &registry)
+    void update_sprites(entt::registry &registry)
     {
       if (auto *ptr = graphicRegistry.try_ctx<RenderContext>(); ptr)
       {
@@ -371,20 +371,12 @@ namespace Graphic
 
   void Graphic::update(entt::registry &registry, float dt)
   {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     if (auto *ptr = graphicRegistry.try_ctx<RenderContext>(); ptr)
     {
       destroy_sprites(registry);
-      render_sprites(registry);
+      update_sprites(registry);
       update_vertices(registry);
-      for (const auto &renderGroupRegistry : ptr->render_group_registry)
-      {
-        for (auto [entity, groupComponent] :
-             renderGroupRegistry->view<RenderGroup>().each())
-        {
-          render_group(*renderGroupRegistry, groupComponent);
-        }
-      }
       auto &observer = *ptr->position_observer.get();
 
       // position updated
@@ -393,6 +385,23 @@ namespace Graphic
         auto renderGroup = registry.get<RenderGroupHandle>(entity);
         auto &groupRegistry = *ptr->render_group_registry[renderGroup.index].get();
         clear_group_data(groupRegistry);
+      }
+      return;
+    }
+    handle_error_context();
+  }
+  void Graphic::render(entt::registry &registry)
+  {
+    if (auto *ptr = graphicRegistry.try_ctx<RenderContext>(); ptr)
+    {
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      for (const auto &renderGroupRegistry : ptr->render_group_registry)
+      {
+        for (auto [entity, groupComponent] :
+             renderGroupRegistry->view<RenderGroup>().each())
+        {
+          render_group(*renderGroupRegistry, groupComponent);
+        }
       }
       return;
     }

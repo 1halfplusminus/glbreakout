@@ -10,6 +10,7 @@
 #include "graphic/helper_graphic_pipeline.hpp"
 #include "graphic/system_graphic_pipeline.hpp"
 #include "graphic/system_particule.hpp"
+#include "graphic/system_opengl_postprocessing.hpp"
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -64,12 +65,18 @@ void Game::processInput(Registry &registry, int action)
   auto context = game_context(registry);
   Gameplay::processInput(registry, context->delatTime, action);
 }
-void Game::render(Registry &registry) {}
+void Game::render(Registry &registry)
+{
+  Graphic::render(registry);
+  Graphic::Particule::render(registry);
+  Graphic::PostProcessing::render(registry);
+}
 void Game::update(Registry &registry, float dt)
 {
   game_update(registry, dt);
   Physic::update(registry, dt);
   Gameplay::update(registry);
+  Graphic::PostProcessing::update(registry, dt);
   Graphic::update(registry, dt);
   Graphic::Particule::update(registry, dt);
 }
@@ -78,7 +85,6 @@ void Game::init(Registry &registry, float w, float h)
   init_game(registry, w, h);
   Physic::init(registry);
   Graphic::init(registry);
-
   auto atlas_image =
       Graphic::load_image("atlas"_hs, "./texture/atlas.png", false);
   Graphic::load_texture("atlas"_hs, atlas_image);
@@ -99,4 +105,10 @@ void Game::init(Registry &registry, float w, float h)
 
   Graphic::add_projection_matrix(glm::ortho(
       0.0f, static_cast<float>(w), static_cast<float>(h), 0.0f, -1.0f, 1.0f));
+
+  Graphic::PostProcessing::init(registry,
+                                static_cast<float>(w),
+                                static_cast<float>(h),
+                                "./shader/framebuffer.vect",
+                                "./shader/framebuffer.frag");
 }

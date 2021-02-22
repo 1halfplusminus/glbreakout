@@ -25,6 +25,7 @@ namespace Graphic
   } // namespace
   void init(entt::registry &registry);
   void update(entt::registry &registry, float dt);
+  void render(entt::registry &registry);
   entt::resource_handle<Graphic::ShaderSource>
   load_shader_source(const entt::hashed_string key, const std::string &path,
                      const Graphic::ShaderType type);
