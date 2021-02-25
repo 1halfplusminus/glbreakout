@@ -5,6 +5,8 @@
         "editor.defaultFormatter": "xaver.clang-format"
     },
     "files.associations": {
+        "*.tpl": "json",
+        "*.vect": "glsl",
         "cmath": "cpp",
         "cstddef": "cpp",
         "cstdint": "cpp",
@@ -86,6 +88,7 @@
         "queue": "cpp",
         "variant": "cpp",
         "compare": "cpp",
-        "csignal": "cpp"
+        "csignal": "cpp",
+        "cinttypes": "cpp"
     }
 }

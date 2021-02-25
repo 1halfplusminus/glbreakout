@@ -10,7 +10,8 @@
 #include "graphic/helper_graphic_pipeline.hpp"
 #include "graphic/system_graphic_pipeline.hpp"
 #include "graphic/system_particule.hpp"
-#include "graphic/system_opengl_postprocessing.hpp"
+#include "system_postprocessing.hpp"
+
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -111,4 +112,6 @@ void Game::init(Registry &registry, float w, float h)
                                 static_cast<float>(h),
                                 "./shader/framebuffer.vect",
                                 "./shader/framebuffer.frag");
+
+  Graphic::PostProcessing::load_effect("invert"_hs, "./shader/framebuffer.vect", "./shader/invert.frag");
 }

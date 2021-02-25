@@ -17,8 +17,29 @@ namespace Graphic
 
         unsigned int particuleVao;
         unsigned int particuleVbo;
-        const entt::hashed_string shader_key = "particle"_hs;
 
+        Graphic::ShaderProgam currentShader;
+
+        static const entt::hashed_string default_shader_key = "particle"_hs;
+
+        void load_shader(entt::hashed_string key, const std::string &vertexShaderPath, const std::string &fragShaderPath)
+        {
+            auto particle_vs_source = Graphic::load_shader_source(
+                "particle_vs"_hs, vertexShaderPath, Graphic::VertexShader);
+            auto particle_fs_source = Graphic::load_shader_source(
+                "particle_fs"_hs, fragShaderPath, Graphic::FragmentShader);
+
+            auto particle_vs = Graphic::load_shader("particle_vs"_hs, particle_vs_source);
+            auto particle_fs = Graphic::load_shader("particle_fs"_hs, particle_fs_source);
+
+            auto particle_shader_r = Graphic::load_shader_program(
+                key, std::vector<Graphic::Shader>{particle_vs, particle_fs});
+        }
+        void active_shader(entt::hashed_string key)
+        {
+            auto shader = Graphic::get_shader_program(key).get();
+            currentShader = shader;
+        }
         void update_particule_life(entt::registry &registry)
         {
             auto particules = registry.view<Particle>(entt::exclude_t<Destroy>());
@@ -48,22 +69,14 @@ namespace Graphic
             particule.life = 1.0f;
             particule.velocity = velocity.value * 0.1f;
         }
-
         void init(entt::registry &registry)
         {
 
             auto texture = Graphic::get_texture("atlas"_hs).get();
             auto sprite = Graphic::Sprite({texture, glm::vec4(0, 128, 500, 500)});
-            auto particle_vs_source = Graphic::load_shader_source(
-                "particle_vs"_hs, "./shader/particule.vect", Graphic::VertexShader);
-            auto particle_fs_source = Graphic::load_shader_source(
-                "particle_fs"_hs, "./shader/particule.frag", Graphic::FragmentShader);
 
-            auto particle_vs = Graphic::load_shader("particle_vs"_hs, particle_vs_source);
-            auto particle_fs = Graphic::load_shader("particle_fs"_hs, particle_fs_source);
-
-            auto particle_shader_r = Graphic::load_shader_program(
-                shader_key, std::vector<Graphic::Shader>{particle_vs, particle_fs});
+            load_shader(default_shader_key, "./shader/particule.vect", "./shader/particule.frag");
+            active_shader(default_shader_key);
 
             glm::vec2 particle_quad[] = {
                 glm::vec2(0.0f, 1.0f),
@@ -111,15 +124,14 @@ namespace Graphic
         void render(entt::registry &registry)
         {
             glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-            auto shader = Graphic::get_shader_program(shader_key).get();
 
             auto particles = registry.view<Particle, Sprite>(entt::exclude_t<Destroy>());
             auto projection = Graphic::projection_matrix();
-            auto offsetPosition = glGetUniformLocation(shader.id, "offset");
-            auto colorPosition = glGetUniformLocation(shader.id, "color");
-            auto imageLocation = glGetUniformLocation(shader.id, "sprite");
-            auto projectionLocation = glGetUniformLocation(shader.id, "projection");
-            glUseProgram(shader.id);
+            auto offsetPosition = glGetUniformLocation(currentShader.id, "offset");
+            auto colorPosition = glGetUniformLocation(currentShader.id, "color");
+            auto imageLocation = glGetUniformLocation(currentShader.id, "sprite");
+            auto projectionLocation = glGetUniformLocation(currentShader.id, "projection");
+            glUseProgram(currentShader.id);
             glUniformMatrix4fv(projectionLocation, 1, GL_FALSE,
                                glm::value_ptr(projection.value));
             for (auto [entity, particle, sprite] : particles.each())

@@ -10,6 +10,7 @@
 #include <GLFW/glfw3.h>
 #include "physic/component_physic.hpp"
 #include <glm/gtc/matrix_transform.hpp>
+#include "system_postprocessing.hpp"
 
 namespace Gameplay
 {
@@ -209,6 +210,7 @@ namespace Gameplay
         registry.patch<Velocity>(a, [force, factor](Velocity &v) {
           v.value = force * glm::normalize(glm::vec3(factor, -1.f, 0.f));
         });
+        Graphic::PostProcessing::desactive_effect();
       }
     }
 
@@ -297,6 +299,7 @@ namespace Gameplay
             v.value.y = -abs(v.value.y);
           }
         });
+        Graphic::PostProcessing::active_effect("invert"_hs);
       }
     }
     void on_collision(entt::registry &registry)
