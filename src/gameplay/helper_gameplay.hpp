@@ -57,5 +57,5 @@ namespace Gameplay
                                           unsigned int lvlHeight);
   void render_level(entt::registry &registry, entt::hashed_string &levelId);
   void processInput(Registry &registry, float dt, int action);
-  void update(Registry &registry);
+  void update(Registry &registry, float dt);
 } // namespace Gameplay

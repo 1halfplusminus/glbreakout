@@ -58,7 +58,7 @@ int main()
     auto deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
 
-    Game::update(*registry, static_cast<float>(deltaTime));
+    Game::update(*registry, static_cast<float>(deltaTime), static_cast<float>(currentFrame));
     Game::render(*registry);
 
     glfwSwapBuffers(window);

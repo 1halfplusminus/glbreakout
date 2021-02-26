@@ -5,7 +5,6 @@
       "includePath": [
         "${workspaceFolder}/**",
         "${workspaceFolder}/glad/include",
-        "${workspaceFolder}/include",
         "${workspaceFolder}",
         "${workspaceFolder}/glad/include",
         "${workspaceFolder}/glad/include"

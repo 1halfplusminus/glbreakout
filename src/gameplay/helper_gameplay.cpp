@@ -28,7 +28,7 @@ namespace Gameplay
 
   namespace
   {
-
+    float shakeTime = 0.0f;
     entt::registry gamePlayRegistry;
     Direction vector_direction(glm::vec2 target)
     {
@@ -299,7 +299,8 @@ namespace Gameplay
             v.value.y = -abs(v.value.y);
           }
         });
-        Graphic::PostProcessing::active_effect("invert"_hs);
+        Graphic::PostProcessing::active_effect("shake"_hs);
+        shakeTime = 0.03f;
       }
     }
     void on_collision(entt::registry &registry)
@@ -482,10 +483,57 @@ namespace Gameplay
     Gameplay::render_level(registry, gameState.currentLevel);
     Gameplay::render_player(registry, w, h);
     Gameplay::render_ball(registry, w, h);
+
+    // post processing effect
+    float offset = 1.0f / 300.0f;
+    float offsets[9][2] = {
+        {-offset, offset},  // top-left
+        {0.0f, offset},     // top-center
+        {offset, offset},   // top-right
+        {-offset, 0.0f},    // center-left
+        {0.0f, 0.0f},       // center-center
+        {offset, 0.0f},     // center - right
+        {-offset, -offset}, // bottom-left
+        {0.0f, -offset},    // bottom-center
+        {offset, -offset}   // bottom-right
+    };
+    float kernel[3][9] = {
+        {-1.f, -1.f, -1.f,
+         -1.f, 8.f, -1.f,
+         -1.f, -1.f, -1.f},
+        {-1.f, -1.f, -1.f,
+         -1.f, 8.f, -1.f,
+         -1.f, -1.f, -1.f},
+        {1.0f / 16.0f, 2.0f / 16.0f, 1.0f / 16.0f,
+         2.0f / 16.0f, 4.0f / 16.0f, 2.0f / 16.0f,
+         1.0f / 16.0f, 2.0f / 16.0f, 1.0f / 16.0f}};
+
+    Graphic::ShaderProgam shaders[3] = {};
+    Graphic::PostProcessing::load_effect("invert"_hs, "./shader/framebuffer.vect", "./shader/invert.frag");
+    shaders[0] = Graphic::get_shader_program("invert"_hs).get();
+    Graphic::PostProcessing::load_effect("chaos"_hs, "./shader/chaos.vect", "./shader/chaos.frag");
+    shaders[1] = Graphic::get_shader_program("chaos"_hs).get();
+    Graphic::PostProcessing::load_effect("shake"_hs, "./shader/shake.vect", "./shader/shake.frag");
+    shaders[2] = Graphic::get_shader_program("shake"_hs).get();
+    for (int i = 0; i < std::size(shaders); i++)
+    {
+      glUseProgram(shaders[i]);
+      glUniform2fv(glGetUniformLocation(shaders[i], "offsets"), 9, (float *)offsets);
+      glUniform1fv(glGetUniformLocation(shaders[i], "kernel"), 9, kernel[i]);
+      glUseProgram(0);
+    }
   }
 
-  void update(entt::registry &registry)
+  void update(entt::registry &registry, float dt)
   {
+    if (shakeTime > 0.0f)
+    {
+      shakeTime -= dt;
+      if (shakeTime <= 0.0f)
+      {
+        Graphic::PostProcessing::desactive_effect();
+      }
+    }
     on_collision(registry);
     ball_mouvement(registry);
   }

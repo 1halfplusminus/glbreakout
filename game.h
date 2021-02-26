@@ -28,7 +28,7 @@ namespace Game
   // game loop
   void processInput(Registry &registry, int action);
   void updateSim(Registry &registry, float dt);
-  void update(Registry &registry, float dt);
+  void update(Registry &registry, float dt, float time);
   entt::basic_handle<entt::entity> world(Registry &registry);
 }; // namespace Game
 

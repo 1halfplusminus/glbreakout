@@ -72,12 +72,12 @@ void Game::render(Registry &registry)
   Graphic::Particule::render(registry);
   Graphic::PostProcessing::render(registry);
 }
-void Game::update(Registry &registry, float dt)
+void Game::update(Registry &registry, float dt, float time)
 {
   game_update(registry, dt);
   Physic::update(registry, dt);
-  Gameplay::update(registry);
-  Graphic::PostProcessing::update(registry, dt);
+  Gameplay::update(registry, dt);
+  Graphic::PostProcessing::update(registry, time);
   Graphic::update(registry, dt);
   Graphic::Particule::update(registry, dt);
 }
@@ -112,6 +112,4 @@ void Game::init(Registry &registry, float w, float h)
                                 static_cast<float>(h),
                                 "./shader/framebuffer.vect",
                                 "./shader/framebuffer.frag");
-
-  Graphic::PostProcessing::load_effect("invert"_hs, "./shader/framebuffer.vect", "./shader/invert.frag");
 }

@@ -15,6 +15,7 @@ namespace Graphic
             ShaderProgam shader;
             std::unique_ptr<OpenGL::PostProcessing> post_processing;
             static const entt::hashed_string default_shader_key = "postprocessing"_hs;
+            float time;
         }
         void load_effect(entt::hashed_string key, const std::string &vertexShaderPath, const std::string &fragShaderPath)
         {
@@ -51,11 +52,14 @@ namespace Graphic
         void update(entt::registry &registry, float dt)
         {
             assert(initalized == true);
+            time = dt;
             post_processing->Capture();
         }
         void render(entt::registry &registry)
         {
             assert(initalized == true);
+            glUseProgram(shader);
+            glUniform1f(glGetUniformLocation(shader, "time"), time);
             post_processing->Render(shader);
         }
     }

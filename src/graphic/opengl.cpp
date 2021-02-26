@@ -266,7 +266,7 @@ namespace OpenGL {
             glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
             glClear(GL_COLOR_BUFFER_BIT);
             glUseProgram(program);
-
+            glDisable(GL_DEPTH_TEST);
             glActiveTexture(GL_TEXTURE0);
             glUniform1i(glGetUniformLocation(program, "screenTexture"), 0);
             _textureColor.Bind();
