@@ -73,7 +73,7 @@ namespace Graphic
         {
 
             auto texture = Graphic::get_texture("atlas"_hs).get();
-            auto sprite = Graphic::Sprite({texture, glm::vec4(0, 128, 500, 500)});
+            auto sprite = Graphic::Sprite({texture, glm::vec4(0, 768, 500, 500)});
 
             load_shader(default_shader_key, "./shader/particule.vect", "./shader/particule.frag");
             active_shader(default_shader_key);

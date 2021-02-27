@@ -91,8 +91,10 @@ namespace Graphic
         if (size > 0)
         {
 
-          glBufferSubData(GL_ARRAY_BUFFER, 0, vertex_data.size() * (sizeof(VertexData)),
-                          data);
+          /*  glBufferSubData(GL_ARRAY_BUFFER, 0, vertex_data.size() * (sizeof(VertexData)),
+                          data); */
+          glBufferData(GL_ARRAY_BUFFER, vertex_data.size() * (sizeof(VertexData)),
+                       data, GL_STREAM_DRAW);
         }
         else
         {

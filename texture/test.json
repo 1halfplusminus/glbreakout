@@ -2,56 +2,99 @@
 
 "awesomeface.png":
 {
-	"frame": {"x":500,"y":128,"w":512,"h":512},
+	"frame": {"x":0,"y":0,"w":512,"h":512},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":512,"h":512},
-	"sourceSize": {"w":512,"h":512},
-	"pivot": {"x":0.5,"y":0.5}
+	"sourceSize": {"w":512,"h":512}
 },
 "block.png":
 {
-	"frame": {"x":0,"y":0,"w":128,"h":128},
+	"frame": {"x":0,"y":512,"w":128,"h":128},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":128,"h":128},
-	"sourceSize": {"w":128,"h":128},
-	"pivot": {"x":0.5,"y":0.5}
+	"sourceSize": {"w":128,"h":128}
 },
 "block_solid.png":
 {
-	"frame": {"x":128,"y":0,"w":128,"h":128},
+	"frame": {"x":128,"y":512,"w":128,"h":128},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":128,"h":128},
-	"sourceSize": {"w":128,"h":128},
-	"pivot": {"x":0.5,"y":0.5}
+	"sourceSize": {"w":128,"h":128}
 },
 "paddle.png":
 {
-	"frame": {"x":256,"y":0,"w":512,"h":128},
+	"frame": {"x":0,"y":640,"w":512,"h":128},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":512,"h":128},
-	"sourceSize": {"w":512,"h":128},
-	"pivot": {"x":0.5,"y":0.5}
+	"sourceSize": {"w":512,"h":128}
 },
 "particle.png":
 {
-	"frame": {"x":0,"y":128,"w":500,"h":500},
+	"frame": {"x":0,"y":768,"w":500,"h":500},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":500,"h":500},
-	"sourceSize": {"w":500,"h":500},
-	"pivot": {"x":0.5,"y":0.5}
+	"sourceSize": {"w":500,"h":500}
+},
+"powerup_chaos.png":
+{
+	"frame": {"x":0,"y":1268,"w":512,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":512,"h":128},
+	"sourceSize": {"w":512,"h":128}
+},
+"powerup_confuse.png":
+{
+	"frame": {"x":0,"y":1396,"w":512,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":512,"h":128},
+	"sourceSize": {"w":512,"h":128}
+},
+"powerup_increase.png":
+{
+	"frame": {"x":0,"y":1524,"w":512,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":512,"h":128},
+	"sourceSize": {"w":512,"h":128}
+},
+"powerup_passthrough.png":
+{
+	"frame": {"x":0,"y":1652,"w":512,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":512,"h":128},
+	"sourceSize": {"w":512,"h":128}
+},
+"powerup_speed.png":
+{
+	"frame": {"x":0,"y":1780,"w":512,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":512,"h":128},
+	"sourceSize": {"w":512,"h":128}
+},
+"powerup_sticky.png":
+{
+	"frame": {"x":0,"y":1908,"w":512,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":512,"h":128},
+	"sourceSize": {"w":512,"h":128}
 }},
 "meta": {
 	"app": "https://www.codeandweb.com/texturepacker",
 	"version": "1.0",
 	"image": "atlas.png",
 	"format": "RGBA8888",
-	"size": {"w":1012,"h":640},
+	"size": {"w":512,"h":2036},
 	"scale": "1",
-	"smartupdate": "$TexturePacker:SmartUpdate:259a802906f4e043fa1b2151cfc22f04:01e632eeffcd771f475af9c0a02e2413:f73158572e09d14c35c6a81bd6140a22$"
+	"smartupdate": "$TexturePacker:SmartUpdate:00b2b1bc232c95211a39277e24aee666:c8d747cc19f58994ca92f527833f6c1c:f73158572e09d14c35c6a81bd6140a22$"
 }
 }

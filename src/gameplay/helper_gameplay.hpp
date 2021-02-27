@@ -39,9 +39,11 @@ namespace Gameplay
       Graphic::Sprite player_sprite;
       Graphic::Sprite ball_sprite;
       Graphic::Sprite backgroud_sprite;
+      Graphic::Sprite powers_up[6];
       Graphic::RenderGroupHandle brick_render_group;
       Graphic::RenderGroupHandle player_render_group;
       Graphic::RenderGroupHandle backgroud_render_group;
+      Graphic::RenderGroupHandle powerup_render_group;
     };
   } // namespace
   struct level_loader final : entt::resource_loader<level_loader, Level>

@@ -263,7 +263,7 @@ namespace OpenGL {
             // now bind back to default framebuffer and draw a quad plane with the attached framebuffer color texture
             _frameBuffer.UnBind();
             // clear all relevant buffers
-            glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
+            glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
             glClear(GL_COLOR_BUFFER_BIT);
             glUseProgram(program);
             glDisable(GL_DEPTH_TEST);
