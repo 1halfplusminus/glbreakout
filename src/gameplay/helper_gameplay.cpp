@@ -306,6 +306,7 @@ namespace Gameplay
         else
         {
           registry.emplace<Graphic::Destroy>(b);
+          registry.remove<Physic::RigidBody>(b);
           registry.emplace_or_replace<PowerUp>(a, powerup);
         }
       }

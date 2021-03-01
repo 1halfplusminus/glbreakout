@@ -13,6 +13,7 @@ namespace Physic
     {
 
         entt::registry &registry;
+
         CheckCollision(entt::registry &r) : registry{r} {}
         void operator()()
         {
@@ -32,16 +33,19 @@ namespace Physic
                             auto bAABB = registry.get<AABB>(b);
                             if (Physic::intersect(aAABB, bAABB))
                             {
+                                std::cout << "Collision beetwen " << static_cast<int>(a) << " " << static_cast<int>(b) << std::endl;
                                 registry.emplace_or_replace<Collision>(a, a, b);
                             }
                         }
                         else if (sameCategory && registry.all_of<AABB>(a) && registry.all_of<SphereCollider>(b))
                         {
+
                             auto aAABB = registry.get<AABB>(a);
                             auto bSphere = registry.get<SphereCollider>(b);
                             auto bPosition = registry.get<Graphic::Position>(b);
                             if (Physic::intersect(aAABB, bPosition.value, bSphere.radius))
                             {
+                                std::cout << "Collision beetwen " << static_cast<int>(a) << " " << static_cast<int>(b) << std::endl;
                                 registry.emplace_or_replace<Collision>(a, a, b);
                             }
                         }
@@ -68,7 +72,8 @@ namespace Physic
     {
         auto &context = registry.set<PhysicContext>();
         context.position_observer = std::unique_ptr<entt::observer>(
-            new entt::observer(registry, entt::collector.update<Graphic::Position>()
+            new entt::observer(registry, entt::collector
+                                             .update<Graphic::Position>()
                                              .where<RigidBody>()));
     }
     void update(entt::registry &registry, float dt)
@@ -90,5 +95,6 @@ namespace Physic
             }
         }
         CheckCollision{registry}();
+        observer.clear();
     }
 } // namespace Physic
