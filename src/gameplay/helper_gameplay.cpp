@@ -77,7 +77,7 @@ namespace Gameplay
       std::cout << "No ball initialized \n";
       return entt::basic_handle(registry, static_cast<entt::entity>(entt::null));
     }
-    void render_powerup(entt::registry &registry, const entt::hashed_string &name, const glm::vec4 &color, const glm::vec3 position)
+    void render_powerup(entt::registry &registry, const Gameplay::PowerUp::Type type, const glm::vec4 &color, const glm::vec3 position)
     {
       if (auto *ptr = gamePlayRegistry.try_ctx<GameplayContext>(); ptr)
       {
@@ -85,24 +85,42 @@ namespace Gameplay
         const glm::vec3 VELOCITY(0.0f, 150.0f, 0.0f);
         auto powerup = registry.create();
         registry.emplace<Graphic::Position>(powerup, position);
-        registry.emplace<Graphic::Transform>(powerup, 0.0f, SIZE);
-        switch (name)
+        registry.emplace<Graphic::Transform>(powerup,
+                                             0.0f, // rotation
+                                             SIZE  // size
+        );
+        Graphic::Sprite sprite;
+        switch (type)
         {
-        case "speed"_hs:
-          registry.emplace<Graphic::RenderSprite>(powerup, ptr->powers_up[4],
-                                                  ptr->powerup_render_group,
-                                                  color);
+        case Gameplay::PowerUp::Type::Sticky:
+          sprite = ptr->powers_up[5];
           break;
-        case "sticky"_hs:
-          registry.emplace<Graphic::RenderSprite>(powerup, ptr->powers_up[5],
-                                                  ptr->powerup_render_group,
-                                                  color);
+        case Gameplay::PowerUp::Type::Speed:
+          sprite = ptr->powers_up[4];
+          break;
+        case Gameplay::PowerUp::Type::PassThrough:
+          sprite = ptr->powers_up[3];
+          break;
+        case Gameplay::PowerUp::Type::PadSizeIncrease:
+          sprite = ptr->powers_up[2];
+          break;
+        case Gameplay::PowerUp::Type::Confuse:
+          sprite = ptr->powers_up[1];
+          break;
+        case Gameplay::PowerUp::Type::Chaos:
+          sprite = ptr->powers_up[0];
           break;
         default:
           break;
         }
+        registry.emplace<Graphic::RenderSprite>(powerup,
+                                                sprite,                   // Sprite
+                                                ptr->player_render_group, // render groupe
+                                                color                     // color
+        );
+        registry.emplace<PowerUp>(powerup, type);
         registry.emplace<Velocity>(powerup, VELOCITY);
-        registry.emplace<Physic::RigidBody>(powerup, 1 << 1, 1 << 0);
+        registry.emplace<Physic::RigidBody>(powerup, 1 << 0, 1 << 1);
         registry.emplace<Physic::AABB>(powerup, position + glm::vec3(SIZE, 0), position);
         return;
       }
@@ -121,15 +139,26 @@ namespace Gameplay
                                                          -ballRadius * 2.0f, 0.0f);
 
         auto ball = registry.create();
-        registry.emplace<Ball>(ball);
+
+        registry.emplace<Ball>(ball,
+                               false // passthrough
+        );
         registry.emplace<Graphic::Position>(ball, pos);
-        registry.emplace<Graphic::Transform>(ball, 0.0f, size);
-        registry.emplace<Graphic::RenderSprite>(ball, ptr->ball_sprite,
-                                                ptr->player_render_group,
-                                                glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+        registry.emplace<Graphic::Transform>(ball,
+                                             0.0f, // rotate,
+                                             size  // size
+        );
+        registry.emplace<Graphic::RenderSprite>(ball,
+                                                ptr->ball_sprite,                 //sprite
+                                                ptr->player_render_group,         //render groupe
+                                                glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) // color
+        );
         registry.emplace<Velocity>(ball, VELOCITY_INITIAL);
         registry.emplace<Movable>(ball, movable.speed);
-        registry.emplace<Physic::RigidBody>(ball, 1 << 0, 1 << 1);
+        registry.emplace<Physic::RigidBody>(ball,
+                                            1 << 0, // category
+                                            1 << 1  // collade with
+        );
         registry.emplace<Physic::SphereCollider>(ball, ballRadius);
         auto particles = registry.view<Graphic::Particle>();
         for (auto [entity, particule] : particles.each())
@@ -150,14 +179,22 @@ namespace Gameplay
         auto player = registry.create();
         registry.emplace<entt::tag<Gameplay::player_tag>>(player);
         registry.emplace<Graphic::Position>(player, playerPos);
-        registry.emplace<Graphic::Transform>(player, 0.0f, PLAYER_SIZE);
+        registry.emplace<Graphic::Transform>(player,
+                                             0.0f,       // rotation
+                                             PLAYER_SIZE // size
+        );
         registry.emplace<Graphic::RenderSprite>(player,
-                                                ptr->player_sprite,
-                                                ptr->player_render_group,
-                                                glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+                                                ptr->player_sprite,               // rotate
+                                                ptr->player_render_group,         // render groupe
+                                                glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) // color
+        );
         registry.emplace<Movable>(player, glm::vec3(2500.0f, 0.0f, 0.0f));
-        registry.emplace<Physic::RigidBody>(player, 1 << 2, 1 << 0);
-        registry.emplace<Physic::AABB>(player, playerPos + glm::vec3(PLAYER_SIZE.x, 0.5f, 0.f), playerPos);
+        registry.emplace<Physic::RigidBody>(player, 1 << 2 /** category **/, 1 << 0 /** collade with **/);
+        registry.emplace<Physic::AABB>(player,
+                                       playerPos + glm::vec3(PLAYER_SIZE.x, 0.5f, 0.f) // upperbound
+                                       ,
+                                       playerPos // lowerbound
+        );
         return;
       }
       handle_error_context();
@@ -170,10 +207,15 @@ namespace Gameplay
         auto background = registry.create();
         registry.emplace<Graphic::Position>(background,
                                             glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-        registry.emplace<Graphic::Transform>(background, 0.0f, glm::vec2(w, h));
-        registry.emplace<Graphic::RenderSprite>(background, ptr->backgroud_sprite,
-                                                ptr->backgroud_render_group,
-                                                glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+        registry.emplace<Graphic::Transform>(background,
+                                             0.0f,           // rotate
+                                             glm::vec2(w, h) // size
+        );
+        registry.emplace<Graphic::RenderSprite>(background,
+                                                ptr->backgroud_sprite,            // sprite
+                                                ptr->backgroud_render_group,      // render group
+                                                glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) // colro
+        );
         return;
       }
       handle_error_context();
@@ -199,19 +241,25 @@ namespace Gameplay
     }
     void spawn_powerup(entt::registry &registry, const glm::vec3 &position)
     {
-      if (should_spawn(2)) // 1 in 75 chance
-        render_powerup(registry, "speed"_hs, glm::vec4(0.5f, 0.5f, 1.0f, 1.0f), position);
+      const int POSITIVE_EFFECT_SPAWN = 5;
+      const int NEGATIVE_EFFECT_SPAWN = 15;
+      if (should_spawn(POSITIVE_EFFECT_SPAWN))
+        render_powerup(registry, PowerUp::Type::Speed, glm::vec4(0.5f, 0.5f, 1.0f, 1.0f), position);
 
-      if (should_spawn(75))
-        render_powerup(registry, "sticky"_hs, glm::vec4(0.5f, 0.5f, 1.0f, 1.0f), position);
-      if (should_spawn(75))
-        return;
-      if (should_spawn(75))
-        return;
-      if (should_spawn(15)) // negative powerups should spawn more often
-        return;
-      if (should_spawn(15))
-        return;
+      if (should_spawn(POSITIVE_EFFECT_SPAWN))
+        render_powerup(registry, PowerUp::Type::Sticky, glm::vec4(1.0f, 0.5f, 1.0f, 1.0f), position);
+      if (should_spawn(POSITIVE_EFFECT_SPAWN))
+        render_powerup(registry, PowerUp::Type::PassThrough, glm::vec4(0.5f, 1.0f, 0.5f, 1.0f), position);
+      return;
+      if (should_spawn(POSITIVE_EFFECT_SPAWN))
+        render_powerup(registry, PowerUp::Type::PadSizeIncrease, glm::vec4(1.0f, 0.6f, 0.4f, 1.0f), position);
+      return;
+      if (should_spawn(NEGATIVE_EFFECT_SPAWN)) // negative powerups should spawn more often
+        render_powerup(registry, PowerUp::Type::Confuse, glm::vec4(1.0f, 0.3f, 0.3f, 1.0f), position);
+      return;
+      if (should_spawn(NEGATIVE_EFFECT_SPAWN))
+        render_powerup(registry, PowerUp::Type::Chaos, glm::vec4(0.9f, 0.25f, 0.25f, 1.0f), position);
+      return;
     }
     glm::vec3 paddle_collision(Physic::AABB brick, glm::vec3 ballPosition, float radius)
     {
@@ -242,6 +290,25 @@ namespace Gameplay
     float hit_factor(glm::vec3 paddlePosition, glm::vec3 ballPosition, float paddleWidth)
     {
       return (ballPosition.x - paddlePosition.x) / paddleWidth;
+    }
+    void on_powerup(PowerUp::Type type)
+    {
+    }
+    void on_player_powerup_collision(entt::registry &registry, entt::entity a, entt::entity b)
+    {
+      if (registry.all_of<entt::tag<player_tag>>(a) && registry.all_of<PowerUp>(b))
+      {
+        const auto powerup = registry.get<PowerUp>(b);
+        if (registry.all_of<Graphic::Destroy>(b))
+        {
+          /* registry.destroy(b); */
+        }
+        else
+        {
+          registry.emplace<Graphic::Destroy>(b);
+          registry.emplace_or_replace<PowerUp>(a, powerup);
+        }
+      }
     }
     void on_ball_player_collision(entt::registry &registry, entt::entity a, entt::entity b)
     {
@@ -370,6 +437,8 @@ namespace Gameplay
           on_ball_brick_collision(registry, collision.b, collision.a);
           on_ball_player_collision(registry, collision.a, collision.b);
           on_ball_player_collision(registry, collision.b, collision.a);
+          on_player_powerup_collision(registry, collision.b, collision.a);
+          on_player_powerup_collision(registry, collision.a, collision.b);
         }
       }
     }
@@ -480,8 +549,6 @@ namespace Gameplay
         Graphic::create_render_group("main"_hs, "atlas"_hs);
     context.player_render_group =
         Graphic::create_render_group("main"_hs, "atlas"_hs);
-    context.powerup_render_group =
-        Graphic::create_render_group("main"_hs, "atlas"_hs);
 
     context.brick_sprite_solid =
         Graphic::Sprite({atlas, glm::vec4(128, 512, 128, 128)});
@@ -509,7 +576,7 @@ namespace Gameplay
     Gameplay::load_level("3"_hs, "./assets/three.txt", w, h / 2);
     Gameplay::load_level("4"_hs, "./assets/four.txt", w, h / 2);
 
-    Gameplay::render_backgroud(registry, w, h);
+    /*     Gameplay::render_backgroud(registry, w, h); */
     Gameplay::render_level(registry, gameState.currentLevel);
     Gameplay::render_player(registry, w, h);
     Gameplay::render_ball(registry, w, h);
@@ -556,7 +623,7 @@ namespace Gameplay
   void mouvement(entt::registry &registry, std::function<void(const entt::entity &)> callback)
   {
     auto world = Game::world(registry).get<Game::World>();
-    auto fallings = registry.view<Velocity, Graphic::Position, Graphic::Transform>(entt::exclude<Movable>);
+    auto fallings = registry.view<Velocity, Graphic::Position, Graphic::Transform>(entt::exclude<Movable, Graphic::Destroy>);
 
     auto count = 0;
     for (auto entity : fallings)
@@ -588,7 +655,6 @@ namespace Gameplay
         });
       });
     }
-    std::cout << "number of ball " << count << std::endl;
   }
   void update(entt::registry &registry, float dt)
   {
@@ -600,7 +666,6 @@ namespace Gameplay
         Graphic::PostProcessing::desactive_effect();
       }
     }
-    on_collision(registry);
     mouvement(
         registry, [&registry](entt::entity entity) {
           if (registry.all_of<Ball>(entity))
@@ -613,6 +678,7 @@ namespace Gameplay
             registry.emplace<Graphic::Destroy>(entity);
           }
         });
+    on_collision(registry);
   }
 
   entt::resource_handle<Level> load_level(entt::hashed_string &levelId,

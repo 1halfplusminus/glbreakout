@@ -27,6 +27,7 @@ namespace Gameplay
   };
   struct Ball
   {
+    bool passThrough;
   };
   struct Level
   {
@@ -37,5 +38,19 @@ namespace Gameplay
     unsigned int cols = 0;
     float unit_width = 0.0f;
     float unit_height = 0.0f;
+  };
+  struct PowerUp
+  {
+
+    enum class Type
+    {
+      Chaos,
+      Speed,
+      Sticky,
+      PassThrough,
+      PadSizeIncrease,
+      Confuse
+    };
+    Type type;
   };
 } // namespace Gameplay

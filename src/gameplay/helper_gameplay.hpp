@@ -43,7 +43,6 @@ namespace Gameplay
       Graphic::RenderGroupHandle brick_render_group;
       Graphic::RenderGroupHandle player_render_group;
       Graphic::RenderGroupHandle backgroud_render_group;
-      Graphic::RenderGroupHandle powerup_render_group;
     };
   } // namespace
   struct level_loader final : entt::resource_loader<level_loader, Level>
