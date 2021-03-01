@@ -78,11 +78,11 @@ void Game::render(Registry &registry)
 void Game::update(Registry &registry, float dt, float time)
 {
   game_update(registry, dt);
+  Gameplay::update(registry, dt);
   Physic::update(registry, dt);
   Graphic::PostProcessing::update(registry, time);
   Graphic::update(registry, dt);
   Graphic::Particule::update(registry, dt);
-  Gameplay::update(registry, dt);
 }
 void Game::init(Registry &registry, float w, float h)
 {
