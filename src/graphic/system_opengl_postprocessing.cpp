@@ -1,10 +1,11 @@
 
+#pragma once
 #include "system_postprocessing.hpp"
-#include "opengl.cpp"
+#include "my_opengl.hpp"
 #include <assert.h>
 #include "graphic/helper_graphic_pipeline.hpp"
 #include "graphic/system_graphic_pipeline.hpp"
-
+#include <unordered_map>
 namespace Graphic
 {
     namespace PostProcessing
@@ -13,9 +14,12 @@ namespace Graphic
         {
             bool initalized;
             ShaderProgam shader;
-            std::unique_ptr<OpenGL::PostProcessing> post_processing;
             static const entt::hashed_string default_shader_key = "postprocessing"_hs;
             float time;
+            float _h;
+            float _w;
+            std::unordered_map<int, std::unique_ptr<OpenGL::PostProcessing>> postProcessings;
+            std::map<int, ShaderProgam> effects;
         }
         void load_effect(entt::hashed_string key, const std::string &vertexShaderPath, const std::string &fragShaderPath)
         {
@@ -34,33 +38,73 @@ namespace Graphic
         }
         void active_effect(entt::hashed_string key)
         {
-            shader = Graphic::get_shader_program(key).get();
+            if (!initalized)
+                return;
+            assert(initalized == true);
+            if (effects.find(key) == effects.end())
+            {
+                effects[key] = Graphic::get_shader_program(key).get();
+            }
+            if (postProcessings.find(key) == postProcessings.end())
+            {
+                postProcessings[key] = std::unique_ptr<OpenGL::PostProcessing>(new OpenGL::PostProcessing(_w, _h));
+            }
         }
         void desactive_effect()
         {
-            active_effect(default_shader_key);
+            if (!initalized)
+                return;
+            assert(initalized == true);
+            effects.clear();
+        }
+        void desactive_effect(entt::hashed_string key)
+        {
+            if (!initalized)
+                return;
+            assert(initalized == true);
+            if (effects.find(key) != effects.end())
+            {
+                effects.erase(key);
+            }
         }
         void init(entt::registry &registry, unsigned int w, unsigned int h, const std::string vertexShader, const std::string fragmentShader)
         {
-
+            initalized = true;
+            _h = h;
+            _w = w;
             load_effect(default_shader_key, vertexShader, fragmentShader);
             active_effect(default_shader_key);
-
-            post_processing = std::unique_ptr<OpenGL::PostProcessing>(new OpenGL::PostProcessing(w, h));
-            initalized = true;
+            shader = Graphic::get_shader_program(default_shader_key).get();
         }
         void update(entt::registry &registry, float dt)
         {
             assert(initalized == true);
             time = dt;
-            post_processing->Capture();
+            postProcessings[default_shader_key]->Capture();
         }
         void render(entt::registry &registry)
         {
             assert(initalized == true);
+            ShaderProgam shaderP;
+            auto i = 0;
+            OpenGL::PostProcessing *previous = nullptr;
             glUseProgram(shader);
             glUniform1f(glGetUniformLocation(shader, "time"), time);
-            post_processing->Render(shader);
+            postProcessings[default_shader_key]->Render(shader, true);
+            for (auto iter = effects.begin()++; iter != effects.end(); iter++)
+            {
+                shaderP = iter->second;
+                auto effect = postProcessings[iter->first].get();
+                effect->Bind(OpenGL::Framebuffer::Target::DRAW);
+                glUseProgram(shaderP);
+                glUniform1f(glGetUniformLocation(shaderP, "time"), time);
+                effect->Render(shaderP, postProcessings[default_shader_key]->GetTexture());
+                effect->Bind(OpenGL::Framebuffer::Target::READ);
+                postProcessings[default_shader_key]->Bind(OpenGL::Framebuffer::Target::DRAW);
+                glUseProgram(shader);
+                postProcessings[default_shader_key]->Render(shader, effect->GetTexture());
+            }
+            postProcessings[default_shader_key]->Render(shader, true);
         }
     }
 } // namespace Graphic

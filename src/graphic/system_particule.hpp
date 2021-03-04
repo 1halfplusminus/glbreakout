@@ -1,4 +1,5 @@
 
+#pragma once
 #include "graphic/component_graphic_pipeline.hpp"
 #include "graphic/component_render.hpp"
 #include "ecs.h"

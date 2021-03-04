@@ -1,4 +1,6 @@
 #pragma once
+#ifndef COMP_GAMEPLAY_HPP
+#define COMP_GAMEPLAY_HPP
 #include "ecs.h"
 #include "graphic/graphic_texture.hpp"
 #include <glm/glm.hpp>
@@ -11,6 +13,10 @@ namespace Gameplay
   {
     SOLID,
     BREAKABLE
+  };
+  struct Duration
+  {
+    float value;
   };
   struct Brick
   {
@@ -27,7 +33,6 @@ namespace Gameplay
   };
   struct Ball
   {
-    bool passThrough;
   };
   struct Level
   {
@@ -39,9 +44,9 @@ namespace Gameplay
     float unit_width = 0.0f;
     float unit_height = 0.0f;
   };
+
   struct PowerUp
   {
-
     enum class Type
     {
       Chaos,
@@ -51,6 +56,12 @@ namespace Gameplay
       PadSizeIncrease,
       Confuse
     };
+
     Type type;
+    bool active;
   };
-} // namespace Gameplay
+
+}
+
+#endif
+// namespace Gameplay

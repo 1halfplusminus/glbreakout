@@ -1,3 +1,4 @@
+#pragma once
 #include "graphic/system_graphic_pipeline.hpp"
 #include "graphic/component_render.hpp"
 #include "graphic/component_graphic_pipeline.hpp"
@@ -72,7 +73,8 @@ namespace Graphic
         /*         glMapBufferRange(GL_ARRAY_BUFFER, 0, vertex_data.size() * (sizeof(VertexData)),
                          GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_INVALIDATE_RANGE_BIT); */
         /* glUnmapBuffer(GL_ARRAY_BUFFER); */
-        glUnmapBuffer(GL_ARRAY_BUFFER);
+        /*  glUnmapBuffer(GL_ARRAY_BUFFER); */
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
       }
     }
     void upload_group_data(entt::registry &registry)

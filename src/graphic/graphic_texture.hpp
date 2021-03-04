@@ -1,3 +1,4 @@
+#pragma once
 #ifndef GRAPHIC_TEXTURE_HPP
 #define GRAPHIC_TEXTURE_HPP
 

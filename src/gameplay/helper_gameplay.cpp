@@ -1,5 +1,6 @@
+
+#pragma once
 #include "gameplay/helper_gameplay.hpp"
-#include "gameplay/component_gameplay.hpp"
 #include "graphic/system_graphic_pipeline.hpp"
 #include "physic/helper_physic.hpp"
 #include <fstream>
@@ -29,7 +30,6 @@ namespace Gameplay
 
   namespace
   {
-    float shakeTime = 0.0f;
     entt::registry gamePlayRegistry;
     Direction vector_direction(glm::vec2 target)
     {
@@ -140,9 +140,7 @@ namespace Gameplay
 
         auto ball = registry.create();
 
-        registry.emplace<Ball>(ball,
-                               false // passthrough
-        );
+        registry.emplace<Ball>(ball);
         registry.emplace<Graphic::Position>(ball, pos);
         registry.emplace<Graphic::Transform>(ball,
                                              0.0f, // rotate,
@@ -241,8 +239,8 @@ namespace Gameplay
     }
     void spawn_powerup(entt::registry &registry, const glm::vec3 &position)
     {
-      const int POSITIVE_EFFECT_SPAWN = 5;
-      const int NEGATIVE_EFFECT_SPAWN = 15;
+      const int POSITIVE_EFFECT_SPAWN = 100;
+      const int NEGATIVE_EFFECT_SPAWN = 5;
       if (should_spawn(POSITIVE_EFFECT_SPAWN))
         render_powerup(registry, PowerUp::Type::Speed, glm::vec4(0.5f, 0.5f, 1.0f, 1.0f), position);
 
@@ -250,16 +248,15 @@ namespace Gameplay
         render_powerup(registry, PowerUp::Type::Sticky, glm::vec4(1.0f, 0.5f, 1.0f, 1.0f), position);
       if (should_spawn(POSITIVE_EFFECT_SPAWN))
         render_powerup(registry, PowerUp::Type::PassThrough, glm::vec4(0.5f, 1.0f, 0.5f, 1.0f), position);
-      return;
+
       if (should_spawn(POSITIVE_EFFECT_SPAWN))
         render_powerup(registry, PowerUp::Type::PadSizeIncrease, glm::vec4(1.0f, 0.6f, 0.4f, 1.0f), position);
-      return;
+
       if (should_spawn(NEGATIVE_EFFECT_SPAWN)) // negative powerups should spawn more often
         render_powerup(registry, PowerUp::Type::Confuse, glm::vec4(1.0f, 0.3f, 0.3f, 1.0f), position);
-      return;
+
       if (should_spawn(NEGATIVE_EFFECT_SPAWN))
         render_powerup(registry, PowerUp::Type::Chaos, glm::vec4(0.9f, 0.25f, 0.25f, 1.0f), position);
-      return;
     }
     glm::vec3 paddle_collision(Physic::AABB brick, glm::vec3 ballPosition, float radius)
     {
@@ -291,9 +288,6 @@ namespace Gameplay
     {
       return (ballPosition.x - paddlePosition.x) / paddleWidth;
     }
-    void on_powerup(PowerUp::Type type)
-    {
-    }
     void on_player_powerup_collision(entt::registry &registry, entt::entity a, entt::entity b)
     {
       if (registry.all_of<entt::tag<player_tag>>(a) && registry.all_of<PowerUp>(b))
@@ -307,7 +301,8 @@ namespace Gameplay
         {
           registry.emplace<Graphic::Destroy>(b);
           registry.remove<Physic::RigidBody>(b);
-          registry.emplace_or_replace<PowerUp>(a, powerup);
+          registry.emplace<Duration>(b, 10.f);
+          registry.emplace<Graphic::Target>(b, a);
         }
       }
     }
@@ -332,7 +327,6 @@ namespace Gameplay
         registry.patch<Velocity>(a, [force, factor](Velocity &v) {
           v.value = force * glm::normalize(glm::vec3(factor, -1.f, 0.f));
         });
-        Graphic::PostProcessing::desactive_effect();
       }
     }
 
@@ -421,8 +415,12 @@ namespace Gameplay
             v.value.y = -abs(v.value.y);
           }
         });
-        Graphic::PostProcessing::active_effect("shake"_hs);
-        shakeTime = 0.03f;
+        auto viewShake = registry.view<Duration, entt::tag<"shake"_hs>>();
+        for (auto shake : viewShake)
+        {
+          auto &duration = viewShake.get<Duration>(shake);
+          duration.value = 0.2f;
+        }
         spawn_powerup(registry, aOtherCenter);
       }
     }
@@ -532,57 +530,16 @@ namespace Gameplay
     }
     return level;
   }
-  void init(entt::registry &registry, unsigned int w, unsigned int h)
+  void create_shake(entt::registry &registry)
   {
-    auto &context = gamePlayRegistry.set<GameplayContext>();
-
-    auto backgroud_image =
-        Graphic::load_image("backgroud"_hs, "./texture/background.jpg", false);
-
-    auto &atlas = Graphic::get_texture("atlas"_hs).get();
-
-    auto &background_texture =
-        Graphic::load_texture("background"_hs, backgroud_image);
-
-    context.backgroud_render_group =
-        Graphic::create_render_group("main"_hs, "background"_hs);
-    context.brick_render_group =
-        Graphic::create_render_group("main"_hs, "atlas"_hs);
-    context.player_render_group =
-        Graphic::create_render_group("main"_hs, "atlas"_hs);
-
-    context.brick_sprite_solid =
-        Graphic::Sprite({atlas, glm::vec4(128, 512, 128, 128)});
-    context.brick_sprite_breakable =
-        Graphic::Sprite({atlas, glm::vec4(0, 512, 128, 128)});
-
-    context.player_sprite = Graphic::Sprite({atlas, glm::vec4(0, 640, 512, 128)});
-
-    context.ball_sprite = Graphic::Sprite({atlas, glm::vec4(0, 0, 512, 512)});
-
-    // POWER UP
-    for (int i = 0; i < 5; i++)
-    {
-      context.powers_up[i] = Graphic::Sprite({atlas, glm::vec4(0, 1268 + (i * 128), 512, 128)});
-    }
-    context.backgroud_sprite = Graphic::Sprite(
-        {background_texture, glm::vec4(0, 0, background_texture.get().width,
-                                       background_texture.get().height)});
-
-    // create game state
-    auto gameEntity = registry.create();
-    auto gameState = registry.emplace<BreakoutGame>(gameEntity, "1"_hs);
-    Gameplay::load_level("1"_hs, "./assets/one.txt", w, h / 2);
-    Gameplay::load_level("2"_hs, "./assets/two.txt", w, h / 2);
-    Gameplay::load_level("3"_hs, "./assets/three.txt", w, h / 2);
-    Gameplay::load_level("4"_hs, "./assets/four.txt", w, h / 2);
-
-    /*     Gameplay::render_backgroud(registry, w, h); */
-    Gameplay::render_level(registry, gameState.currentLevel);
-    Gameplay::render_player(registry, w, h);
-    Gameplay::render_ball(registry, w, h);
-
+    auto shake = registry.create();
+    registry.emplace<Duration>(shake, 0.f);
+    registry.emplace<entt::tag<"shake"_hs>>(shake);
+  }
+  void init_postprocessing(entt::registry &registry)
+  {
     // post processing effect
+    create_shake(registry);
     float offset = 1.0f / 300.0f;
     float offsets[9][2] = {
         {-offset, offset},  // top-left
@@ -621,6 +578,59 @@ namespace Gameplay
       glUseProgram(0);
     }
   }
+  void init(entt::registry &registry, unsigned int w, unsigned int h)
+  {
+
+    auto &context = gamePlayRegistry.set<GameplayContext>();
+
+    auto backgroud_image =
+        Graphic::load_image("backgroud"_hs, "./texture/background.jpg", false);
+
+    auto &atlas = Graphic::get_texture("atlas"_hs).get();
+
+    auto &background_texture =
+        Graphic::load_texture("background"_hs, backgroud_image);
+
+    context.backgroud_render_group =
+        Graphic::create_render_group("main"_hs, "background"_hs);
+    context.brick_render_group =
+        Graphic::create_render_group("main"_hs, "atlas"_hs);
+    context.player_render_group =
+        Graphic::create_render_group("main"_hs, "atlas"_hs);
+
+    context.brick_sprite_solid =
+        Graphic::Sprite({atlas, glm::vec4(128, 512, 128, 128)});
+    context.brick_sprite_breakable =
+        Graphic::Sprite({atlas, glm::vec4(0, 512, 128, 128)});
+
+    context.player_sprite = Graphic::Sprite({atlas, glm::vec4(0, 640, 512, 128)});
+
+    context.ball_sprite = Graphic::Sprite({atlas, glm::vec4(0, 0, 512, 512)});
+
+    // POWER UP
+    for (int i = 0; i < 5; i++)
+    {
+      context.powers_up[i] = Graphic::Sprite({atlas, glm::vec4(0, 1268 + (i * 128), 512, 128)});
+    }
+    context.backgroud_sprite = Graphic::Sprite(
+        {background_texture, glm::vec4(0, 0, background_texture.get().width,
+                                       background_texture.get().height)});
+
+    // create game state
+    auto gameEntity = registry.create();
+    auto gameState = registry.emplace<BreakoutGame>(gameEntity, "1"_hs);
+    load_level("1"_hs, "./assets/one.txt", w, h / 2);
+    load_level("2"_hs, "./assets/two.txt", w, h / 2);
+    load_level("3"_hs, "./assets/three.txt", w, h / 2);
+    load_level("4"_hs, "./assets/four.txt", w, h / 2);
+
+    render_backgroud(registry, w, h);
+    render_level(registry, gameState.currentLevel);
+    render_player(registry, w, h);
+    render_ball(registry, w, h);
+
+    init_postprocessing(registry);
+  }
   void mouvement(entt::registry &registry, std::function<void(const entt::entity &)> callback)
   {
     auto world = Game::world(registry).get<Game::World>();
@@ -657,16 +667,134 @@ namespace Gameplay
       });
     }
   }
-  void update(entt::registry &registry, float dt)
+  void update_shake(entt::registry &registry, float dt)
   {
-    if (shakeTime > 0.0f)
+    auto view = registry.view<entt::tag<"shake"_hs>, Duration>();
+    for (auto entity : view)
     {
-      shakeTime -= dt;
-      if (shakeTime <= 0.0f)
+      auto duration = view.get<Duration>(entity);
+      if (duration.value > 0.f)
       {
-        Graphic::PostProcessing::desactive_effect();
+        Graphic::PostProcessing::active_effect("shake"_hs);
+      }
+      else
+      {
+        Graphic::PostProcessing::desactive_effect("shake"_hs);
       }
     }
+  }
+  void update_duration(entt::registry &registry, float dt)
+  {
+    auto view = registry.view<Duration>();
+    for (auto entity : view)
+    {
+      auto &duration = view.get<Duration>(entity);
+      if (duration.value > 0.0f)
+      {
+        duration.value -= dt;
+        if (duration.value < 0.f)
+        {
+          duration.value = 0.f;
+        }
+      }
+    }
+  }
+  const std::string debug_powerup(PowerUp powerup)
+  {
+    char *PowerUpTypes[] =
+        {
+            "Chaos",
+            "Speed",
+            "Sticky",
+            "PassThrough",
+            "PadSizeIncrease",
+            "Confuse"};
+    return PowerUpTypes[static_cast<int>(powerup.type)];
+  }
+  void active_powerup(PowerUp powerup)
+  {
+    std::cout << "Active power up " << debug_powerup(powerup) << std::endl;
+    switch (powerup.type)
+    {
+    case PowerUp::Type::Chaos:
+      Graphic::PostProcessing::active_effect("chaos"_hs);
+      break;
+    case PowerUp::Type::Confuse:
+      Graphic::PostProcessing::active_effect("invert"_hs);
+      break;
+    case PowerUp::Type::PadSizeIncrease:
+      break;
+    case PowerUp::Type::PassThrough:
+      break;
+    case PowerUp::Type::Speed:
+      break;
+    case PowerUp::Type::Sticky:
+      break;
+    default:
+      break;
+    }
+  }
+  void desactive_powerup(PowerUp powerup)
+  {
+    std::cout << "Desactive power up " << debug_powerup(powerup) << std::endl;
+    switch (powerup.type)
+    {
+    case PowerUp::Type::Chaos:
+      Graphic::PostProcessing::desactive_effect("chaos"_hs);
+      break;
+    case PowerUp::Type::Confuse:
+      break;
+    case PowerUp::Type::PadSizeIncrease:
+      break;
+    case PowerUp::Type::PassThrough:
+      break;
+    case PowerUp::Type::Speed:
+      break;
+    case PowerUp::Type::Sticky:
+      break;
+    default:
+      break;
+    }
+  }
+  void on_powerup(PowerUp powerup)
+  {
+    std::cout << "On power up " << debug_powerup(powerup) << std::endl;
+  }
+  void uodate_powerup(entt::registry &registry, float dt)
+  {
+    auto view = registry.view<PowerUp, Graphic::Target, Duration>();
+    auto p = player(registry);
+    for (auto entity : view)
+    {
+      auto [powerup, target, duration] = view.get(entity);
+      if (target.target == p.entity())
+      {
+
+        if (duration.value > 0)
+        {
+          if (powerup.active == false)
+          {
+            powerup.active = true;
+            active_powerup(powerup);
+          }
+          else
+          {
+            on_powerup(powerup);
+          }
+        }
+        else if (powerup.active == true)
+        {
+          powerup.active = false;
+          desactive_powerup(powerup);
+        }
+      }
+    }
+  }
+  void update(entt::registry &registry, float dt)
+  {
+    update_duration(registry, dt);
+    update_shake(registry, dt);
+    uodate_powerup(registry, dt);
     mouvement(
         registry, [&registry](entt::entity entity) {
           if (registry.all_of<Ball>(entity))

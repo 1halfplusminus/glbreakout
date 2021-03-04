@@ -33,7 +33,7 @@ namespace Physic
                             auto bAABB = registry.get<AABB>(b);
                             if (Physic::intersect(aAABB, bAABB))
                             {
-                                std::cout << "Collision beetwen " << static_cast<int>(a) << " " << static_cast<int>(b) << std::endl;
+                                /* std::cout << "Collision beetwen " << static_cast<int>(a) << " " << static_cast<int>(b) << std::endl; */
                                 registry.emplace_or_replace<Collision>(a, a, b);
                             }
                         }
@@ -45,7 +45,7 @@ namespace Physic
                             auto bPosition = registry.get<Graphic::Position>(b);
                             if (Physic::intersect(aAABB, bPosition.value, bSphere.radius))
                             {
-                                std::cout << "Collision beetwen " << static_cast<int>(a) << " " << static_cast<int>(b) << std::endl;
+                                /* std::cout << "Collision beetwen " << static_cast<int>(a) << " " << static_cast<int>(b) << std::endl; */
                                 registry.emplace_or_replace<Collision>(a, a, b);
                             }
                         }

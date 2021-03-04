@@ -89,6 +89,11 @@ void Game::init(Registry &registry, float w, float h)
   init_game(registry, w, h);
   Physic::init(registry);
   Graphic::init(registry);
+  Graphic::PostProcessing::init(registry,
+                                static_cast<float>(w),
+                                static_cast<float>(h),
+                                "./shader/framebuffer.vect",
+                                "./shader/framebuffer.frag");
   auto atlas_image =
       Graphic::load_image("atlas"_hs, "./texture/atlas.png", false);
   Graphic::load_texture("atlas"_hs, atlas_image);
@@ -110,9 +115,5 @@ void Game::init(Registry &registry, float w, float h)
   Graphic::add_projection_matrix(glm::ortho(
       0.0f, static_cast<float>(w), static_cast<float>(h), 0.0f, -1.0f, 1.0f));
 
-  Graphic::PostProcessing::init(registry,
-                                static_cast<float>(w),
-                                static_cast<float>(h),
-                                "./shader/framebuffer.vect",
-                                "./shader/framebuffer.frag");
+  /* Graphic::PostProcessing::active_effect("chaos"_hs); */
 }

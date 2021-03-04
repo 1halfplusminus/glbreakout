@@ -1,4 +1,5 @@
 
+#pragma once
 #ifndef SYS_POSTPROCESSING_HPP
 #define SYS_POSTPROCESSING_HPP
 #include "ecs.h"
@@ -12,6 +13,7 @@ namespace Graphic
         void render(entt::registry &registry);
         void active_effect(entt::hashed_string key);
         void desactive_effect();
+        void desactive_effect(entt::hashed_string key);
         void load_effect(entt::hashed_string key, const std::string &vertexShaderPath, const std::string &fragShaderPath);
     }
 } // namespace Graphic

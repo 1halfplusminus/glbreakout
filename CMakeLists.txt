@@ -53,7 +53,7 @@ set(HEADER_FILES
 ./src/graphic/helper_graphic_pipeline.cpp
 ./src/graphic/system_particule.hpp
 ./src/graphic/system_particule.cpp
-./src/graphic/opengl.cpp
+./src/graphic/my_opengl.hpp
 ./src/physic/component_physic.hpp
 ./src/physic/helper_physic.hpp
 ./src/physic/helper_physic.cpp
@@ -85,7 +85,7 @@ target_link_libraries(${execName} libs ${ALL_LIBS})
 endmacro()
 
 MY_ADD_EXECUTABLE(main main.cpp)
-MY_ADD_EXECUTABLE(playground test.cpp)
+
 
 file(COPY "./shader" DESTINATION  "./Debug")
 file(COPY "./texture" DESTINATION  "./Debug")
