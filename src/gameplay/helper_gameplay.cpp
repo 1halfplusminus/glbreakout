@@ -242,21 +242,22 @@ namespace Gameplay
     }
     void spawn_powerup(entt::registry &registry, const glm::vec3 &position)
     {
-      const int POSITIVE_EFFECT_SPAWN = 1000000;
-      const int NEGATIVE_EFFECT_SPAWN = 1000000;
+      const int POSITIVE_EFFECT_SPAWN = 10;
+      const int NEGATIVE_EFFECT_SPAWN = 10;
       if (should_spawn(POSITIVE_EFFECT_SPAWN))
       {
         render_powerup(registry, PowerUp::Type::Speed, glm::vec4(0.5f, 0.5f, 1.0f, 1.0f), position);
       }
 
-      if (should_spawn(POSITIVE_EFFECT_SPAWN) || true)
+      if (should_spawn(POSITIVE_EFFECT_SPAWN))
       {
         render_powerup(registry, PowerUp::Type::Sticky, glm::vec4(1.0f, 0.5f, 1.0f, 1.0f), position);
-        return;
       }
 
       if (should_spawn(POSITIVE_EFFECT_SPAWN))
+      {
         render_powerup(registry, PowerUp::Type::PassThrough, glm::vec4(0.5f, 1.0f, 0.5f, 1.0f), position);
+      }
 
       if (should_spawn(POSITIVE_EFFECT_SPAWN))
       {
@@ -442,6 +443,7 @@ namespace Gameplay
       if (registry.all_of<Ball>(a) && registry.all_of<Brick>(b))
       {
         auto brick = registry.get<Brick>(b);
+
         if (brick.type != BrickType::SOLID)
         {
           registry.patch<Brick>(b, [](Brick &brick) {
@@ -449,6 +451,11 @@ namespace Gameplay
           });
           registry.emplace<Graphic::Destroy>(b);
           registry.remove_if_exists<Physic::RigidBody>(b);
+          auto ball = registry.get<Ball>(a);
+          if (ball.passThrough)
+          {
+            return;
+          }
         }
       }
       if (registry.all_of<Ball>(a) && (registry.all_of<Brick>(b)))
@@ -778,6 +785,36 @@ namespace Gameplay
       );
     }
   }
+  void active_passthrough(entt::registry &registry)
+  {
+    auto ballHandle = ball(registry);
+    auto playerHandle = player(registry);
+    auto &ball = ballHandle.get<Ball>();
+    ball.passThrough = true;
+    if (auto *ptr = gamePlayRegistry.try_ctx<GameplayContext>(); ptr)
+    {
+      registry.emplace_or_replace<Graphic::RenderSprite>(playerHandle.entity(),
+                                                         ptr->player_sprite,               // rotate
+                                                         ptr->player_render_group,         // render groupe
+                                                         glm::vec4(1.0f, 0.5f, 0.5f, 1.0f) // color
+      );
+    }
+  }
+  void desactive_passthrough(entt::registry &registry)
+  {
+    auto ballHandle = ball(registry);
+    auto playerHandle = player(registry);
+    auto &ball = ballHandle.get<Ball>();
+    ball.passThrough = false;
+    if (auto *ptr = gamePlayRegistry.try_ctx<GameplayContext>(); ptr)
+    {
+      registry.emplace_or_replace<Graphic::RenderSprite>(playerHandle.entity(),
+                                                         ptr->player_sprite,               // rotate
+                                                         ptr->player_render_group,         // render groupe
+                                                         glm::vec4(1.0f, 1.0f, 0.5f, 1.0f) // color
+      );
+    }
+  }
   void active_padsize_increase(entt::registry &registry)
   {
     auto playerHandle = player(registry);
@@ -817,6 +854,7 @@ namespace Gameplay
       active_padsize_increase(registry);
       break;
     case PowerUp::Type::PassThrough:
+      active_passthrough(registry);
       break;
     case PowerUp::Type::Speed:
       active_speed_power_up(registry);
@@ -843,6 +881,7 @@ namespace Gameplay
       desactive_padsize_increase(registry);
       break;
     case PowerUp::Type::PassThrough:
+      desactive_passthrough(registry);
       break;
     case PowerUp::Type::Speed:
       desactive_speed_power_up(registry);
