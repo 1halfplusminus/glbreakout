@@ -27,7 +27,7 @@ namespace Gameplay
   auto nTopMiddle = glm::vec3(0.f, -1.f, 0.f);
   constexpr glm::vec3 VELOCITY_INITIAL(50.0f, -350.0f, 0.0f);
   constexpr glm::vec2 PLAYER_SIZE(100.0f, 20.0f);
-
+  constexpr glm::vec3 PLAYER_SPEED(2500.0f, 0.0f, 0.0f);
   namespace
   {
     entt::registry gamePlayRegistry;
@@ -140,7 +140,10 @@ namespace Gameplay
 
         auto ball = registry.create();
 
-        registry.emplace<Ball>(ball);
+        registry.emplace<Ball>(ball,
+                               false, // sticky
+                               false  // passthrough
+        );
         registry.emplace<Graphic::Position>(ball, pos);
         registry.emplace<Graphic::Transform>(ball,
                                              0.0f, // rotate,
@@ -186,7 +189,7 @@ namespace Gameplay
                                                 ptr->player_render_group,         // render groupe
                                                 glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) // color
         );
-        registry.emplace<Movable>(player, glm::vec3(2500.0f, 0.0f, 0.0f));
+        registry.emplace<Movable>(player, PLAYER_SPEED);
         registry.emplace<Physic::RigidBody>(player, 1 << 2 /** category **/, 1 << 0 /** collade with **/);
         registry.emplace<Physic::AABB>(player,
                                        playerPos + glm::vec3(PLAYER_SIZE.x, 0.5f, 0.f) // upperbound
@@ -239,24 +242,67 @@ namespace Gameplay
     }
     void spawn_powerup(entt::registry &registry, const glm::vec3 &position)
     {
-      const int POSITIVE_EFFECT_SPAWN = 100;
-      const int NEGATIVE_EFFECT_SPAWN = 5;
+      const int POSITIVE_EFFECT_SPAWN = 1000000;
+      const int NEGATIVE_EFFECT_SPAWN = 1000000;
       if (should_spawn(POSITIVE_EFFECT_SPAWN))
+      {
         render_powerup(registry, PowerUp::Type::Speed, glm::vec4(0.5f, 0.5f, 1.0f, 1.0f), position);
+      }
 
-      if (should_spawn(POSITIVE_EFFECT_SPAWN))
+      if (should_spawn(POSITIVE_EFFECT_SPAWN) || true)
+      {
         render_powerup(registry, PowerUp::Type::Sticky, glm::vec4(1.0f, 0.5f, 1.0f, 1.0f), position);
+        return;
+      }
+
       if (should_spawn(POSITIVE_EFFECT_SPAWN))
         render_powerup(registry, PowerUp::Type::PassThrough, glm::vec4(0.5f, 1.0f, 0.5f, 1.0f), position);
 
       if (should_spawn(POSITIVE_EFFECT_SPAWN))
+      {
         render_powerup(registry, PowerUp::Type::PadSizeIncrease, glm::vec4(1.0f, 0.6f, 0.4f, 1.0f), position);
+      }
 
       if (should_spawn(NEGATIVE_EFFECT_SPAWN)) // negative powerups should spawn more often
         render_powerup(registry, PowerUp::Type::Confuse, glm::vec4(1.0f, 0.3f, 0.3f, 1.0f), position);
 
       if (should_spawn(NEGATIVE_EFFECT_SPAWN))
         render_powerup(registry, PowerUp::Type::Chaos, glm::vec4(0.9f, 0.25f, 0.25f, 1.0f), position);
+    }
+    void reset_ball(entt::registry &registry)
+    {
+      auto playerHandle = player(registry);
+      auto ballHandle = ball(registry);
+      auto [playerPosition, transform, movable] =
+          playerHandle.get<Graphic::Position, Graphic::Transform, Movable>();
+      auto collision = ballHandle.get<Physic::SphereCollider>();
+
+      // reset ball
+      glm::vec3 ballPosition = playerPosition.value +
+                               glm::vec3(transform.size.x / 2.0f - collision.radius,
+                                         -collision.radius * 2.0f, 0.0f);
+      ballHandle.replace<Graphic::Position>(ballPosition);
+      ballHandle.replace<Velocity>(VELOCITY_INITIAL);
+      ballHandle.emplace<Movable>(movable.speed);
+    }
+    void reset_player(entt::registry &registry)
+    {
+      auto playerHandle = player(registry);
+      auto ballHandle = ball(registry);
+      auto world = Game::world(registry).get<Game::World>();
+      auto [playerPosition, transform, movable] =
+          playerHandle.get<Graphic::Position, Graphic::Transform, Movable>();
+      auto collision = ballHandle.get<Physic::SphereCollider>();
+
+      // reset player
+      glm::vec3 playerPos =
+          glm::vec3(world.viewport.x / 2.0f - PLAYER_SIZE.x / 2.0f,
+                    world.viewport.y - PLAYER_SIZE.y - 10, 1.0f);
+
+      playerHandle.replace<Graphic::Position>(playerPos);
+
+      // reset ball
+      reset_ball(registry);
     }
     glm::vec3 paddle_collision(Physic::AABB brick, glm::vec3 ballPosition, float radius)
     {
@@ -310,11 +356,12 @@ namespace Gameplay
     {
       if (registry.all_of<Ball>(a) && registry.all_of<entt::tag<player_tag>>(b))
       {
-        auto aabb = registry.get<Physic::AABB>(b);
+        auto position = registry.get<Graphic::Position>(a);
+        auto ball = registry.get<Ball>(a);
         auto paddleTransform = registry.get<Graphic::Transform>(b);
+        auto aabb = registry.get<Physic::AABB>(b);
         auto sphere = registry.get<Physic::SphereCollider>(a);
         auto paddlePosition = registry.get<Graphic::Position>(b);
-        auto position = registry.get<Graphic::Position>(a);
         auto velocity = registry.get<Velocity>(a);
         auto force = glm::length(velocity.value);
         auto factor = hit_factor(paddlePosition.value + (glm::vec3(paddleTransform.size, 0.f) / 2.f),
@@ -327,6 +374,20 @@ namespace Gameplay
         registry.patch<Velocity>(a, [force, factor](Velocity &v) {
           v.value = force * glm::normalize(glm::vec3(factor, -1.f, 0.f));
         });
+        if (ball.sticky)
+        {
+          /*  registry.emplace_or_replace<Movable>(a, PLAYER_SPEED); */
+          auto collision = registry.get<Physic::SphereCollider>(a);
+          auto movable = registry.get<Movable>(b);
+          // reset ball
+          glm::vec3 ballPosition = position.value +
+                                   glm::vec3(-collision.radius,
+                                             -collision.radius * 2.0f, 0.0f);
+          registry.replace<Graphic::Position>(a, ballPosition);
+          /* registry.replace<Graphic::Position>(a, VELOCITY_INITIAL); */
+          registry.emplace_or_replace<Movable>(a, movable.speed);
+          return;
+        }
       }
     }
 
@@ -457,30 +518,6 @@ namespace Gameplay
       auto gameHandle = game_state(registry);
       render_level(registry, gameHandle.get<BreakoutGame>().currentLevel);
     }
-    void reset_player(entt::registry &registry)
-    {
-      auto playerHandle = player(registry);
-      auto ballHandle = ball(registry);
-      auto world = Game::world(registry).get<Game::World>();
-      auto [playerPosition, transform, movable] =
-          playerHandle.get<Graphic::Position, Graphic::Transform, Movable>();
-      auto collision = ballHandle.get<Physic::SphereCollider>();
-
-      // reset player
-      glm::vec3 playerPos =
-          glm::vec3(world.viewport.x / 2.0f - PLAYER_SIZE.x / 2.0f,
-                    world.viewport.y - PLAYER_SIZE.y - 10, 1.0f);
-
-      playerHandle.replace<Graphic::Position>(playerPos);
-
-      // reset ball
-      glm::vec3 ballPosition = playerPosition.value +
-                               glm::vec3(transform.size.x / 2.0f - collision.radius,
-                                         -collision.radius * 2.0f, 0.0f);
-      ballHandle.replace<Graphic::Position>(ballPosition);
-      ballHandle.replace<Velocity>(VELOCITY_INITIAL);
-      ballHandle.emplace<Movable>(movable.speed);
-    }
 
   } // namespace
   std::shared_ptr<Level> level_loader::load(const std::string &filePath,
@@ -608,7 +645,7 @@ namespace Gameplay
     context.ball_sprite = Graphic::Sprite({atlas, glm::vec4(0, 0, 512, 512)});
 
     // POWER UP
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i <= 5; i++)
     {
       context.powers_up[i] = Graphic::Sprite({atlas, glm::vec4(0, 1268 + (i * 128), 512, 128)});
     }
@@ -711,7 +748,61 @@ namespace Gameplay
             "Confuse"};
     return PowerUpTypes[static_cast<int>(powerup.type)];
   }
-  void active_powerup(PowerUp powerup)
+  void active_sticky(entt::registry &registry)
+  {
+    auto ballHandle = ball(registry);
+    auto playerHandle = player(registry);
+    auto &ball = ballHandle.get<Ball>();
+    ball.sticky = true;
+    if (auto *ptr = gamePlayRegistry.try_ctx<GameplayContext>(); ptr)
+    {
+      registry.emplace_or_replace<Graphic::RenderSprite>(playerHandle.entity(),
+                                                         ptr->player_sprite,               // rotate
+                                                         ptr->player_render_group,         // render groupe
+                                                         glm::vec4(1.0f, 0.5f, 1.0f, 1.0f) // color
+      );
+    }
+  }
+  void desactive_sticky(entt::registry &registry)
+  {
+    auto ballHandle = ball(registry);
+    auto playerHandle = player(registry);
+    auto &ball = ballHandle.get<Ball>();
+    ball.sticky = false;
+    if (auto *ptr = gamePlayRegistry.try_ctx<GameplayContext>(); ptr)
+    {
+      registry.emplace_or_replace<Graphic::RenderSprite>(playerHandle.entity(),
+                                                         ptr->player_sprite,               // rotate
+                                                         ptr->player_render_group,         // render groupe
+                                                         glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) // color
+      );
+    }
+  }
+  void active_padsize_increase(entt::registry &registry)
+  {
+    auto playerHandle = player(registry);
+    auto &transform = playerHandle.get<Graphic::Transform>();
+    transform.size.x = PLAYER_SIZE.x + 50;
+  }
+  void desactive_padsize_increase(entt::registry &registry)
+  {
+    auto playerHandle = player(registry);
+    auto &transform = playerHandle.get<Graphic::Transform>();
+    transform.size.x = PLAYER_SIZE.x;
+  }
+  void active_speed_power_up(entt::registry &registry)
+  {
+    auto playerHandle = player(registry);
+    auto &movable = playerHandle.get<Gameplay::Movable>();
+    movable.speed = PLAYER_SPEED * 1.2f;
+  }
+  void desactive_speed_power_up(entt::registry &registry)
+  {
+    auto playerHandle = player(registry);
+    auto &movable = playerHandle.get<Gameplay::Movable>();
+    movable.speed = PLAYER_SPEED;
+  }
+  void active_powerup(entt::registry &registry, PowerUp powerup)
   {
     std::cout << "Active power up " << debug_powerup(powerup) << std::endl;
     switch (powerup.type)
@@ -723,18 +814,21 @@ namespace Gameplay
       Graphic::PostProcessing::active_effect("invert"_hs);
       break;
     case PowerUp::Type::PadSizeIncrease:
+      active_padsize_increase(registry);
       break;
     case PowerUp::Type::PassThrough:
       break;
     case PowerUp::Type::Speed:
+      active_speed_power_up(registry);
       break;
     case PowerUp::Type::Sticky:
+      active_sticky(registry);
       break;
     default:
       break;
     }
   }
-  void desactive_powerup(PowerUp powerup)
+  void desactive_powerup(entt::registry &registry, PowerUp powerup)
   {
     std::cout << "Desactive power up " << debug_powerup(powerup) << std::endl;
     switch (powerup.type)
@@ -743,22 +837,26 @@ namespace Gameplay
       Graphic::PostProcessing::desactive_effect("chaos"_hs);
       break;
     case PowerUp::Type::Confuse:
+      Graphic::PostProcessing::desactive_effect("invert"_hs);
       break;
     case PowerUp::Type::PadSizeIncrease:
+      desactive_padsize_increase(registry);
       break;
     case PowerUp::Type::PassThrough:
       break;
     case PowerUp::Type::Speed:
+      desactive_speed_power_up(registry);
       break;
     case PowerUp::Type::Sticky:
+      desactive_sticky(registry);
       break;
     default:
       break;
     }
   }
-  void on_powerup(PowerUp powerup)
+  void on_powerup(entt::registry &registry, PowerUp powerup)
   {
-    std::cout << "On power up " << debug_powerup(powerup) << std::endl;
+    /*     std::cout << "On power up " << debug_powerup(powerup) << std::endl; */
   }
   void uodate_powerup(entt::registry &registry, float dt)
   {
@@ -775,17 +873,17 @@ namespace Gameplay
           if (powerup.active == false)
           {
             powerup.active = true;
-            active_powerup(powerup);
+            active_powerup(registry, powerup);
           }
           else
           {
-            on_powerup(powerup);
+            on_powerup(registry, powerup);
           }
         }
         else if (powerup.active == true)
         {
           powerup.active = false;
-          desactive_powerup(powerup);
+          desactive_powerup(registry, powerup);
         }
       }
     }

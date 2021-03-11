@@ -33,6 +33,8 @@ namespace Gameplay
   };
   struct Ball
   {
+    bool sticky;
+    bool passThrough;
   };
   struct Level
   {

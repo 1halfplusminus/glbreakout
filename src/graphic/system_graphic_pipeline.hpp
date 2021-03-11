@@ -22,6 +22,7 @@ namespace Graphic
       entt::resource_cache<Graphic::Texture> texture_cache;
       std::vector<std::unique_ptr<entt::registry>> render_group_registry;
       std::unique_ptr<entt::observer> position_observer;
+      std::unique_ptr<entt::observer> sprite_observer;
     };
   } // namespace
   void init(entt::registry &registry);

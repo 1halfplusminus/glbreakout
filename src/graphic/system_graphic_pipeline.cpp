@@ -27,6 +27,12 @@ namespace Graphic
       auto &context = graphicRegistry.set<RenderContext>();
       context.position_observer = std::unique_ptr<entt::observer>(
           new entt::observer(registry, entt::collector.update<Position>().update<Transform>().where<RenderGroupHandle>()));
+
+      context.sprite_observer = std::unique_ptr<entt::observer>(
+          new entt::observer(registry, entt::collector.update<RenderSprite>()
+                                           .update<Position>()
+                                           .update<Transform>()
+                                           .where<RenderGroupHandle>(entt::exclude<Destroy>)));
     }
 
     void create_vertex_array(entt::registry &registry, unsigned int &vao,
@@ -121,11 +127,19 @@ namespace Graphic
       {
         std::set<int> renderGroupToUpdate;
         auto toRender = registry.group<RenderSprite, Position, Transform>(entt::exclude<Destroy>);
-        for (auto [spriteEntity, renderSprite, position, transform] :
-             toRender.each())
+        auto &observer = *ptr->sprite_observer.get();
+        for (auto [spriteEntity, renderSprite, position, transform] : toRender.each())
         {
+
           auto &groupRegistry =
               *ptr->render_group_registry[renderSprite.group.index].get();
+          for (auto [vEntity, vData] : groupRegistry.view<VertexData>().each())
+          {
+            if (vData.sprite == spriteEntity)
+            {
+              groupRegistry.destroy(vEntity);
+            }
+          }
           std::vector<Graphic::VertexData> data{
               Graphic::VertexData{glm::vec4(0.0f, 1.0f, 0.0f, 1.0f)},
               Graphic::VertexData{glm::vec4(1.0f, 0.0f, 1.0f, 0.0f)},
@@ -144,7 +158,14 @@ namespace Graphic
           }
           renderGroupToUpdate.insert(renderSprite.group.index);
           registry.remove<RenderSprite>(spriteEntity);
-          registry.emplace<RenderGroupHandle>(spriteEntity, renderSprite.group);
+          if (registry.all_of<RenderGroupHandle>(spriteEntity))
+          {
+            registry.replace<RenderGroupHandle>(spriteEntity, renderSprite.group);
+          }
+          else
+          {
+            registry.emplace<RenderGroupHandle>(spriteEntity, renderSprite.group);
+          }
         }
         for (auto groupIndex : renderGroupToUpdate)
         {
@@ -166,6 +187,13 @@ namespace Graphic
           auto renderGroup = registry.get<RenderGroupHandle>(entity);
           auto &groupRegistry =
               *ptr->render_group_registry[renderGroup.index].get();
+          for (auto [vEntity, vData] : groupRegistry.view<VertexData>().each())
+          {
+            if (vData.sprite == entity)
+            {
+              groupRegistry.destroy(vEntity);
+            }
+          }
           destroy(registry, entity);
           renderGroupToUpdate.insert(renderGroup.index);
         }
