@@ -10,6 +10,7 @@
 #include "graphic/helper_graphic_pipeline.hpp"
 #include "graphic/system_graphic_pipeline.hpp"
 #include "graphic/system_particule.hpp"
+#include "audio/system_audio.hpp"
 #include "system_postprocessing.hpp"
 
 #include <entt/entt.hpp>
@@ -78,6 +79,7 @@ void Game::render(Registry &registry)
 void Game::update(Registry &registry, float dt, float time)
 {
   game_update(registry, dt);
+  Audio::update(registry, dt);
   Gameplay::update(registry, dt);
   Physic::update(registry, dt);
   Graphic::PostProcessing::update(registry, time);
@@ -87,6 +89,10 @@ void Game::update(Registry &registry, float dt, float time)
 void Game::init(Registry &registry, float w, float h)
 {
   init_game(registry, w, h);
+  Audio::init(registry);
+
+  Audio::load_sound("background"_hs, "./assets/breakout.ogg");
+
   Physic::init(registry);
   Graphic::init(registry);
   Graphic::PostProcessing::init(registry,
@@ -114,6 +120,4 @@ void Game::init(Registry &registry, float w, float h)
 
   Graphic::add_projection_matrix(glm::ortho(
       0.0f, static_cast<float>(w), static_cast<float>(h), 0.0f, -1.0f, 1.0f));
-
-  /* Graphic::PostProcessing::active_effect("chaos"_hs); */
 }

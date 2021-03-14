@@ -15,13 +15,17 @@ add_subdirectory (freetype2)
 add_subdirectory (entt)
 
 # set variables that are needed
+add_subdirectory (SFML)
+link_directories(./SFML/extlibs/libs-msvc/x64)
+file(GLOB MY_HEADERS ./SFML/extlibs/bin/x64/*.dll)
+
+# set variables that are needed
 set(ZLIB_LIBRARIES zlibstatic)
 set(ENABLE_BOOST_WORKAROUND ON)
-set(BUILD_STATIC_LIB ON)
 set(BUILD_ASSIMP_TOOLS  ON)
 set(ASSIMP_BUILD_STATIC_LIB ON)
 set(ASSIMP_BUILD_DRACO OFF)
-
+set(BUILD_STATIC_LIB ON)
 add_subdirectory (assimp)
 
 set(ALL_LIBS
@@ -31,6 +35,8 @@ set(ALL_LIBS
 	assimp
 	freetype
 	EnTT
+	sfml-system
+	sfml-audio
 )
 
 set(HEADER_FILES 
@@ -54,6 +60,11 @@ set(HEADER_FILES
 ./src/graphic/system_particule.hpp
 ./src/graphic/system_particule.cpp
 ./src/graphic/my_opengl.hpp
+./src/audio/audio_sound.hpp
+./src/audio/audio_sound.cpp
+./src/audio/component_audio.hpp
+./src/audio/system_audio.hpp
+./src/audio/system_audio.cpp
 ./src/physic/component_physic.hpp
 ./src/physic/helper_physic.hpp
 ./src/physic/helper_physic.cpp
@@ -65,7 +76,7 @@ set(HEADER_FILES
 )
 
 add_library(libs STATIC ./glad/src/glad.c ./ecs.h  )
-target_include_directories(libs PRIVATE ./stb ${ALL_LIBS})
+target_include_directories(libs PRIVATE ./stb ${ALL_LIBS} )
 
 
 macro(MY_ADD_EXECUTABLE execName source)
@@ -79,12 +90,21 @@ target_include_directories(${execName}
 	"${CMAKE_SOURCE_DIR}/src/graphic"
 	"${CMAKE_SOURCE_DIR}/src/gameplay"
 	"${CMAKE_SOURCE_DIR}/src/physic"
+	"${CMAKE_SOURCE_DIR}/src/audio"
 )
 target_link_libraries(${execName} libs ${ALL_LIBS})
 
 endmacro()
 
+
 MY_ADD_EXECUTABLE(main main.cpp)
+
+foreach(CurrentHeaderFile IN LISTS MY_HEADERS)
+	add_custom_command(TARGET main POST_BUILD        # Adds a post-build event to MyTest
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different  # which executes "cmake - E copy_if_different..."
+		${CurrentHeaderFile}     # <--this is in-file
+		$<TARGET_FILE_DIR:main>)                 # <--this is out-file path
+endforeach()
 
 
 file(COPY "./shader" DESTINATION  "./Debug")
@@ -92,6 +112,13 @@ file(COPY "./texture" DESTINATION  "./Debug")
 file(COPY "./fonts" DESTINATION  "./Debug")
 file(COPY "./assets" DESTINATION  "./Debug")
 
+file(COPY "./shader" DESTINATION  "./Release")
+file(COPY "./texture" DESTINATION  "./Release")
+file(COPY "./fonts" DESTINATION  "./Release")
+file(COPY "./assets" DESTINATION  "./Release")
+
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 include(CPack)
+
+

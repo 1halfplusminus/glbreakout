@@ -3,6 +3,7 @@
 #include "gameplay/helper_gameplay.hpp"
 #include "graphic/system_graphic_pipeline.hpp"
 #include "physic/helper_physic.hpp"
+#include "audio/component_audio.hpp"
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -242,8 +243,8 @@ namespace Gameplay
     }
     void spawn_powerup(entt::registry &registry, const glm::vec3 &position)
     {
-      const int POSITIVE_EFFECT_SPAWN = 10;
-      const int NEGATIVE_EFFECT_SPAWN = 10;
+      const int POSITIVE_EFFECT_SPAWN = 50;
+      const int NEGATIVE_EFFECT_SPAWN = 40;
       if (should_spawn(POSITIVE_EFFECT_SPAWN))
       {
         render_powerup(registry, PowerUp::Type::Speed, glm::vec4(0.5f, 0.5f, 1.0f, 1.0f), position);
@@ -443,7 +444,9 @@ namespace Gameplay
       if (registry.all_of<Ball>(a) && registry.all_of<Brick>(b))
       {
         auto brick = registry.get<Brick>(b);
-
+        auto aOtherPosition = registry.get<Graphic::Position>(b);
+        auto otherTransform = registry.get<Graphic::Transform>(b);
+        auto aOtherCenter = aOtherPosition.value + (glm::vec3(otherTransform.size, 1.0f) / glm::vec3(2));
         if (brick.type != BrickType::SOLID)
         {
           registry.patch<Brick>(b, [](Brick &brick) {
@@ -452,6 +455,7 @@ namespace Gameplay
           registry.emplace<Graphic::Destroy>(b);
           registry.remove_if_exists<Physic::RigidBody>(b);
           auto ball = registry.get<Ball>(a);
+          spawn_powerup(registry, aOtherCenter);
           if (ball.passThrough)
           {
             return;
@@ -489,7 +493,6 @@ namespace Gameplay
           auto &duration = viewShake.get<Duration>(shake);
           duration.value = 0.2f;
         }
-        spawn_powerup(registry, aOtherCenter);
       }
     }
     void on_collision(entt::registry &registry)
@@ -663,6 +666,7 @@ namespace Gameplay
     // create game state
     auto gameEntity = registry.create();
     auto gameState = registry.emplace<BreakoutGame>(gameEntity, "1"_hs);
+    registry.emplace<Audio::Play2D>(gameEntity, "background"_hs);
     load_level("1"_hs, "./assets/one.txt", w, h / 2);
     load_level("2"_hs, "./assets/two.txt", w, h / 2);
     load_level("3"_hs, "./assets/three.txt", w, h / 2);

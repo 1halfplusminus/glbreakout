@@ -21,7 +21,7 @@ Graphic::texture_image_loader::load(Image &image) const
       format = GL_RGBA;
     else
       format = GL_RGBA8;
-    std::cout << "Image format: " << image.nrChannels << "\n";
+    /*     std::cout << "Image format: " << image.nrChannels << "\n"; */
     // bind texture
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexImage2D(GL_TEXTURE_2D, 0, format, image.width, image.height, 0, format,
