@@ -14,6 +14,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "system_postprocessing.hpp"
 #include <functional>
+#include "audio/system_audio.hpp"
 
 namespace Gameplay
 {
@@ -378,7 +379,6 @@ namespace Gameplay
         });
         if (ball.sticky)
         {
-          /*  registry.emplace_or_replace<Movable>(a, PLAYER_SPEED); */
           auto collision = registry.get<Physic::SphereCollider>(a);
           auto movable = registry.get<Movable>(b);
           // reset ball
@@ -386,9 +386,18 @@ namespace Gameplay
                                    glm::vec3(-collision.radius,
                                              -collision.radius * 2.0f, 0.0f);
           registry.replace<Graphic::Position>(a, ballPosition);
-          /* registry.replace<Graphic::Position>(a, VELOCITY_INITIAL); */
           registry.emplace_or_replace<Movable>(a, movable.speed);
           return;
+        }
+        // play sound
+        auto soundToPlay = Audio::Play2D("bleep"_hs, false, 2500);
+        if (registry.all_of<Audio::Play2D>(a) == false)
+        {
+          registry.emplace<Audio::Play2D>(a, soundToPlay);
+        }
+        else
+        {
+          registry.replace<Audio::Play2D>(a, soundToPlay);
         }
       }
     }
@@ -441,7 +450,8 @@ namespace Gameplay
     }
     void on_ball_brick_collision(entt::registry &registry, entt::entity a, entt::entity b)
     {
-      if (registry.all_of<Ball>(a) && registry.all_of<Brick>(b))
+      auto isBallBrickCollision = registry.all_of<Ball>(a) && registry.all_of<Brick, Graphic::Position>(b);
+      if (isBallBrickCollision)
       {
         auto brick = registry.get<Brick>(b);
         auto aOtherPosition = registry.get<Graphic::Position>(b);
@@ -462,7 +472,7 @@ namespace Gameplay
           }
         }
       }
-      if (registry.all_of<Ball>(a) && (registry.all_of<Brick>(b)))
+      if (isBallBrickCollision)
       {
         auto aOtherAABB = registry.get<Physic::AABB>(b);
         auto aOtherPosition = registry.get<Graphic::Position>(b);
@@ -487,11 +497,25 @@ namespace Gameplay
             v.value.y = -abs(v.value.y);
           }
         });
+      }
+      if (isBallBrickCollision)
+      {
         auto viewShake = registry.view<Duration, entt::tag<"shake"_hs>>();
+        auto brick = registry.get<Brick>(b);
+        auto soundToPlayId = brick.type == BrickType::SOLID ? "solid"_hs : "not_solid"_hs;
+        auto soundToPlay = Audio::Play2D(soundToPlayId, false, 3500);
         for (auto shake : viewShake)
         {
           auto &duration = viewShake.get<Duration>(shake);
           duration.value = 0.2f;
+          if (registry.all_of<Audio::Play2D>(shake) == false)
+          {
+            registry.emplace<Audio::Play2D>(shake, soundToPlay);
+          }
+          else
+          {
+            registry.replace<Audio::Play2D>(shake, soundToPlay);
+          }
         }
       }
     }
@@ -625,9 +649,36 @@ namespace Gameplay
       glUseProgram(0);
     }
   }
+  void init_game_sound()
+  {
+
+    Audio::load_sound("background"_hs, "./assets/breakout.ogg");
+    Audio::load_sound("bleep"_hs, "./assets/bleep.wav");
+    Audio::load_sound("powerup"_hs, "./assets/powerup.wav");
+    Audio::load_sound("solid"_hs, "./assets/solid.wav");
+    Audio::load_sound("not_solid"_hs, "./assets/not_solid.ogg");
+  }
+  void init_game_shader(unsigned int w, unsigned int h)
+  {
+    auto main_vs_source = Graphic::load_shader_source(
+        "main_vs"_hs, "./shader/main.vect", Graphic::VertexShader);
+    auto main_fs_source = Graphic::load_shader_source(
+        "main_fs"_hs, "./shader/main.frag", Graphic::FragmentShader);
+
+    auto main_vs = Graphic::load_shader("main_vs"_hs, main_vs_source);
+    auto main_fs = Graphic::load_shader("main_fs"_hs, main_fs_source);
+
+    auto main_shader_r = Graphic::load_shader_program(
+        "main"_hs, std::vector<Graphic::Shader>{main_vs, main_fs});
+
+    Graphic::add_projection_matrix(glm::ortho(
+        0.0f, static_cast<float>(w), static_cast<float>(h), 0.0f, -1.0f, 1.0f));
+  }
   void init(entt::registry &registry, unsigned int w, unsigned int h)
   {
 
+    init_game_shader(w, h);
+    init_game_sound();
     auto &context = gamePlayRegistry.set<GameplayContext>();
 
     auto backgroud_image =
@@ -666,7 +717,7 @@ namespace Gameplay
     // create game state
     auto gameEntity = registry.create();
     auto gameState = registry.emplace<BreakoutGame>(gameEntity, "1"_hs);
-    registry.emplace<Audio::Play2D>(gameEntity, "background"_hs);
+    registry.emplace<Audio::Play2D>(gameEntity, "background"_hs, true);
     load_level("1"_hs, "./assets/one.txt", w, h / 2);
     load_level("2"_hs, "./assets/two.txt", w, h / 2);
     load_level("3"_hs, "./assets/three.txt", w, h / 2);
@@ -846,6 +897,16 @@ namespace Gameplay
   void active_powerup(entt::registry &registry, PowerUp powerup)
   {
     std::cout << "Active power up " << debug_powerup(powerup) << std::endl;
+    auto p = player(registry);
+    auto soundToPlay = Audio::Play2D("powerup"_hs, false, 4500);
+    if (registry.all_of<Audio::Play2D>(p) == false)
+    {
+      registry.emplace<Audio::Play2D>(p, soundToPlay);
+    }
+    else
+    {
+      registry.replace<Audio::Play2D>(p, soundToPlay);
+    }
     switch (powerup.type)
     {
     case PowerUp::Type::Chaos:
@@ -899,6 +960,7 @@ namespace Gameplay
   }
   void on_powerup(entt::registry &registry, PowerUp powerup)
   {
+
     /*     std::cout << "On power up " << debug_powerup(powerup) << std::endl; */
   }
   void uodate_powerup(entt::registry &registry, float dt)

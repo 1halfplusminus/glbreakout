@@ -89,6 +89,9 @@
         "variant": "cpp",
         "compare": "cpp",
         "csignal": "cpp",
-        "cinttypes": "cpp"
+        "cinttypes": "cpp",
+        "bit": "cpp",
+        "clocale": "cpp",
+        "stop_token": "cpp"
     }
 }

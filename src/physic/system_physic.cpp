@@ -3,6 +3,7 @@
 #include "physic/system_physic.hpp"
 #include "physic/component_physic.hpp"
 #include "graphic/component_render.hpp"
+#include "graphic/component_graphic_pipeline.hpp"
 #include "physic/helper_physic.hpp"
 #include <iostream>
 
@@ -17,7 +18,7 @@ namespace Physic
         CheckCollision(entt::registry &r) : registry{r} {}
         void operator()()
         {
-            auto colladable = registry.view<RigidBody>();
+            auto colladable = registry.view<RigidBody>(entt::exclude_t<Graphic::Destroy>());
             for (auto a : colladable)
             {
                 for (auto b : colladable)
@@ -27,7 +28,7 @@ namespace Physic
                         auto aRigidBody = colladable.get<RigidBody>(a);
                         auto bRigidBody = colladable.get<RigidBody>(b);
                         auto sameCategory = aRigidBody.collidWith & bRigidBody.category;
-                        if (sameCategory && registry.all_of<AABB>(a) && registry.all_of<AABB>(b))
+                        if (sameCategory && registry.all_of<AABB, Graphic::Position>(a) && registry.all_of<AABB, Graphic::Position>(b))
                         {
                             auto aAABB = registry.get<AABB>(a);
                             auto bAABB = registry.get<AABB>(b);
@@ -37,7 +38,7 @@ namespace Physic
                                 registry.emplace_or_replace<Collision>(a, a, b);
                             }
                         }
-                        else if (sameCategory && registry.all_of<AABB>(a) && registry.all_of<SphereCollider>(b))
+                        else if (sameCategory && registry.all_of<AABB, Graphic::Position>(a) && registry.all_of<SphereCollider, Graphic::Position>(b))
                         {
 
                             auto aAABB = registry.get<AABB>(a);

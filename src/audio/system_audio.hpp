@@ -12,5 +12,6 @@ namespace Audio
     };
     void init(entt::registry &registry);
     void load_sound(const entt::hashed_string key, const std::string &path);
+    void play_sound(const entt::hashed_string key);
     void update(entt::registry &registry, float dt);
 } // namespace Audio

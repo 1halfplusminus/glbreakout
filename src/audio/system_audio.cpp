@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include "system_audio.hpp"
+#include "component_gameplay.hpp"
 
 namespace Audio
 {
@@ -28,7 +29,20 @@ namespace Audio
         }
         handle_error_context();
     }
-
+    void play_sound(const entt::hashed_string key)
+    {
+        if (auto *ptr = audioRegistry.try_ctx<AudioContext>(); ptr)
+        {
+            auto &sound = ptr->sound_cache.handle(key).get();
+            auto isNotPlaying = sound.getStatus() != sound.Playing;
+            if (isNotPlaying)
+            {
+                sound.play();
+            }
+            return;
+        }
+        handle_error_context();
+    }
     void init(entt::registry &registry)
     {
         init_context(registry);
@@ -41,9 +55,23 @@ namespace Audio
             for (auto [entity, play2D] : view.each())
             {
                 auto &sound = ptr->sound_cache.handle(play2D.name).get();
-                if (sound.getStatus() != sound.Playing)
+                auto isNotPlaying = sound.getStatus() != sound.Playing;
+                auto haveDuration = registry.all_of<Gameplay::Duration>(entity);
+                sound.setLoop(play2D.loopback);
+                if (isNotPlaying && !play2D.played)
                 {
+                    play2D.played = true;
                     sound.play();
+                    sound.setPlayingOffset(sf::microseconds(play2D.offset));
+                }
+                if (haveDuration)
+                {
+
+                    auto &duration = registry.get<Gameplay::Duration>(entity);
+                    if (duration.value == 0)
+                    {
+                        sound.stop();
+                    }
                 }
             }
             return;

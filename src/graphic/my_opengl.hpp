@@ -29,11 +29,7 @@ bool _glCheckErrors(const char *filename, int line)
     {
         printf("OpenGL Error: %s (%d) [%u] %s\n", filename, line, err, glGetErrorString(err));
         error = true;
-        exit(-1);
-    }
-    if(error) 
-    {
-        std::cout << "Here" << std::endl ;
+        /* exit(-1); */
     }
     return error;
 }
