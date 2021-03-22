@@ -92,6 +92,7 @@
         "cinttypes": "cpp",
         "bit": "cpp",
         "clocale": "cpp",
-        "stop_token": "cpp"
+        "stop_token": "cpp",
+        "strstream": "cpp"
     }
 }

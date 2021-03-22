@@ -10,6 +10,7 @@
 #include "graphic/helper_graphic_pipeline.hpp"
 #include "graphic/system_graphic_pipeline.hpp"
 #include "graphic/system_particule.hpp"
+#include "graphic/system_text_render.hpp"
 #include "audio/system_audio.hpp"
 #include "system_postprocessing.hpp"
 
@@ -94,6 +95,8 @@ void Game::init(Registry &registry, float w, float h)
   Audio::init(registry);
   Physic::init(registry);
   Graphic::init(registry);
+  Graphic::Text::init(registry);
+  Graphic::Text::load_font("roboto"_hs, "./fonts/Roboto-Light.ttf");
   Graphic::PostProcessing::init(registry,
                                 static_cast<float>(w),
                                 static_cast<float>(h),

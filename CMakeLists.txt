@@ -45,7 +45,8 @@ set(ALL_LIBS
 set(HEADER_FILES 
 ./stb/stb_image.h 
 ./constants.h 
-./ecs.h 
+./ecs.h
+./freefont.h
 ./game.h 
 ./game.cpp
 ./src/graphic/graphic_image.hpp 
@@ -63,6 +64,11 @@ set(HEADER_FILES
 ./src/graphic/system_particule.hpp
 ./src/graphic/system_particule.cpp
 ./src/graphic/my_opengl.hpp
+./src/graphic/system_text_render.hpp
+./src/graphic/system_text_render.cpp
+./src/graphic/component_text.hpp
+./src/graphic/helper_text_render.hpp
+./src/graphic/helper_text_render.cpp
 ./src/audio/audio_sound.hpp
 ./src/audio/audio_sound.cpp
 ./src/audio/component_audio.hpp
@@ -109,16 +115,25 @@ foreach(CurrentHeaderFile IN LISTS MY_HEADERS)
 		$<TARGET_FILE_DIR:main>)                 # <--this is out-file path
 endforeach()
 
+set(ASSETS 
+shader
+texture
+fonts
+assets
+)
 
-file(COPY "./shader" DESTINATION  "./Debug")
-file(COPY "./texture" DESTINATION  "./Debug")
-file(COPY "./fonts" DESTINATION  "./Debug")
-file(COPY "./assets" DESTINATION  "./Debug")
-
-file(COPY "./shader" DESTINATION  "./Release")
-file(COPY "./texture" DESTINATION  "./Release")
-file(COPY "./fonts" DESTINATION  "./Release")
-file(COPY "./assets" DESTINATION  "./Release")
+foreach(Asset IN LISTS ASSETS)
+	file(GLOB FILES ${Asset}/*)
+	message(STATUS ${Asset})
+	foreach(File IN LISTS FILES)
+		message(STATUS ${File})
+		get_filename_component(FILENAME ${File} NAME)
+		add_custom_command(TARGET main POST_BUILD        # Adds a post-build event to MyTest
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different  # which executes "cmake - E copy_if_different..."
+		${File}     # <--this is in-file
+		$<TARGET_FILE_DIR:main>/${Asset}/${FILENAME}) # <--this is out-file path
+	endforeach()
+endforeach()
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
