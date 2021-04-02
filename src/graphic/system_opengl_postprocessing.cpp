@@ -1,5 +1,5 @@
 
-#pragma once
+
 #include "system_postprocessing.hpp"
 #include "my_opengl.hpp"
 #include <assert.h>
@@ -8,6 +8,7 @@
 #include <unordered_map>
 namespace Graphic
 {
+
     namespace PostProcessing
     {
         namespace

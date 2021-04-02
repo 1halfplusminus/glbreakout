@@ -1,5 +1,4 @@
 
-#pragma once
 #include "gameplay/helper_gameplay.hpp"
 #include "graphic/system_graphic_pipeline.hpp"
 #include "physic/helper_physic.hpp"
@@ -13,9 +12,10 @@
 #include "physic/component_physic.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include "system_postprocessing.hpp"
+#include "graphic/component_text.hpp"
 #include <functional>
 #include "audio/system_audio.hpp"
-
+#include "graphic/system_text_render.hpp"
 namespace Gameplay
 {
 
@@ -59,6 +59,25 @@ namespace Gameplay
       std::cout << "gameplay context not initialized !";
       exit(1);
     }
+    void init_gui(entt::registry &registry, unsigned int w, unsigned int h)
+    {
+      const int size = 70;
+      Graphic::Text::load_font("roboto"_hs, "./fonts/Roboto-Light.ttf", size);
+
+      auto scoreText = Graphic::Text::RenderText();
+      scoreText.color = glm::vec3(1.0f, 1.0f, 1.0f);
+      scoreText.font = "roboto"_hs;
+      scoreText.text = "0";
+      scoreText.position = glm::vec2(10, h - 10);
+      scoreText.scale = 1.0f;
+      scoreText.size = size;
+      auto score = registry.create();
+      registry.emplace<Graphic::Text::RenderText>(score, scoreText);
+      registry.emplace<entt::tag<"score"_hs>>(score);
+    }
+    /*  Graphic::Text::RenderText &get_score_text(entt::registry &registry)
+    {
+    } */
     entt::basic_handle<entt::entity> player(entt::registry &registry)
     {
       auto players = registry.view<entt::tag<Gameplay::player_tag>>();
@@ -679,6 +698,7 @@ namespace Gameplay
 
     init_game_shader(w, h);
     init_game_sound();
+    init_gui(registry, w, h);
     auto &context = gamePlayRegistry.set<GameplayContext>();
 
     auto backgroud_image =

@@ -15,6 +15,7 @@ namespace Graphic
         void desactive_effect();
         void desactive_effect(entt::hashed_string key);
         void load_effect(entt::hashed_string key, const std::string &vertexShaderPath, const std::string &fragShaderPath);
+
     }
 } // namespace Graphic
 #endif

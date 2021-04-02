@@ -79,12 +79,15 @@ void Game::render(Registry &registry)
   Graphic::render(registry);
   Graphic::Particule::render(registry);
   Graphic::PostProcessing::render(registry);
+  Graphic::Text::render(registry);
 }
 void Game::update(Registry &registry, float dt, float time)
 {
   game_update(registry, dt);
+  Audio::update(registry, dt);
   Gameplay::update(registry, dt);
   Physic::update(registry, dt);
+  Graphic::Text::update(registry, time);
   Graphic::PostProcessing::update(registry, time);
   Graphic::update(registry, dt);
   Graphic::Particule::update(registry, dt);
@@ -95,8 +98,7 @@ void Game::init(Registry &registry, float w, float h)
   Audio::init(registry);
   Physic::init(registry);
   Graphic::init(registry);
-  Graphic::Text::init(registry);
-  Graphic::Text::load_font("roboto"_hs, "./fonts/Roboto-Light.ttf");
+  Graphic::Text::init(registry, w, h);
   Graphic::PostProcessing::init(registry,
                                 static_cast<float>(w),
                                 static_cast<float>(h),
@@ -108,13 +110,4 @@ void Game::init(Registry &registry, float w, float h)
 
   Graphic::Particule::init(registry);
   Gameplay::init(registry, w, h);
-
-  tr = std::thread([&]() {
-    while (true)
-    {
-      std::this_thread::sleep_for(std::chrono::microseconds(1));
-      auto worldHandle = world(registry);
-      Audio::update(registry, worldHandle.get<World>().deltaTime);
-    }
-  });
 }

@@ -1,4 +1,3 @@
-#pragma once
 #include <glm/glm.hpp>
 #include "ecs.h"
 
@@ -8,8 +7,12 @@ namespace Graphic
     {
         struct RenderText
         {
-            glm::vec4 position;
+            glm::vec2 position;
             std::string text;
+            glm::vec3 color;
+            float scale;
+            entt::hashed_string font;
+            int size;
         };
         struct Character
         {
@@ -17,8 +20,7 @@ namespace Graphic
             glm::ivec2 size;
             glm::ivec2 bearing;
             unsigned int advance;
-            entt::hashed_string font;
-            int fontSize;
+            Sprite sprite;
         };
     }
 }

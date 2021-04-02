@@ -6,7 +6,4 @@ in vec4 ParticleColor;
 
 uniform sampler2D sprite;
 
-
-void main() {
-    FragColor = (texture(sprite,TexCoords) * ParticleColor);
-}
+void main() { FragColor = (texture(sprite, TexCoords) * ParticleColor); }
