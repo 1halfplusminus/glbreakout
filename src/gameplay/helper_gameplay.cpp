@@ -34,6 +34,14 @@ namespace Gameplay
     {
       entt::monostate<"player_life"_hs>{} = life() - value;
     }
+    bool is_gameover()
+    {
+      return entt::monostate<"game_over"_hs>();
+    }
+    void gameover(bool value)
+    {
+      entt::monostate<"game_over"_hs>{} = value;
+    }
   };
   auto nBottomMiddle = glm::vec3(0.f, 1.f, 0.f);
   auto nBottomLeft = glm::normalize(glm::vec3(0.f, 1.f, 0.f));
@@ -74,12 +82,18 @@ namespace Gameplay
       return (Direction)best_match;
     }
 
-        void handle_error_context()
+    void handle_error_context()
     {
       std::cout << "gameplay context not initialized !";
       exit(1);
     }
 
+    void display_gameover(entt::registry &registry)
+    {
+      auto worldHandle = Game::world(registry);
+      auto world = worldHandle.get<Game::World>();
+      std::cout << "Game over !" << std::endl;
+    }
     void display_score(entt::registry &registry, unsigned int w, unsigned int h)
     {
       auto scoreText = Graphic::Text::RenderText();
@@ -116,6 +130,7 @@ namespace Gameplay
       auto hud = registry.view<entt::tag<"life"_hs>>().front();
       auto &renderText = registry.get<Graphic::Text::RenderText>(hud);
       renderText.text = format_life(GameMonoState::life());
+      std::cout << renderText.text << std::endl;
     }
 
     void init_gui(entt::registry &registry, unsigned int w, unsigned int h)
@@ -618,8 +633,261 @@ namespace Gameplay
       auto gameHandle = game_state(registry);
       render_level(registry, gameHandle.get<BreakoutGame>().currentLevel);
     }
+    // POWER UP
+    const std::string debug_powerup(PowerUp powerup)
+    {
+      char *PowerUpTypes[] =
+          {
+              "Chaos",
+              "Speed",
+              "Sticky",
+              "PassThrough",
+              "PadSizeIncrease",
+              "Confuse"};
+      return PowerUpTypes[static_cast<int>(powerup.type)];
+    }
+    void active_sticky(entt::registry &registry)
+    {
+      auto ballHandle = ball(registry);
+      auto playerHandle = player(registry);
+      auto &ball = ballHandle.get<Ball>();
+      ball.sticky = true;
+      if (auto *ptr = gamePlayRegistry.try_ctx<GameplayContext>(); ptr)
+      {
+        registry.emplace_or_replace<Graphic::RenderSprite>(playerHandle.entity(),
+                                                           ptr->player_sprite,               // rotate
+                                                           ptr->player_render_group,         // render groupe
+                                                           glm::vec4(1.0f, 0.5f, 1.0f, 1.0f) // color
+        );
+      }
+    }
+    void desactive_sticky(entt::registry &registry)
+    {
+      auto ballHandle = ball(registry);
+      auto playerHandle = player(registry);
+      auto &ball = ballHandle.get<Ball>();
+      ball.sticky = false;
+      if (auto *ptr = gamePlayRegistry.try_ctx<GameplayContext>(); ptr)
+      {
+        registry.emplace_or_replace<Graphic::RenderSprite>(playerHandle.entity(),
+                                                           ptr->player_sprite,               // rotate
+                                                           ptr->player_render_group,         // render groupe
+                                                           glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) // color
+        );
+      }
+    }
+    void active_passthrough(entt::registry &registry)
+    {
+      auto ballHandle = ball(registry);
+      auto playerHandle = player(registry);
+      auto &ball = ballHandle.get<Ball>();
+      ball.passThrough = true;
+      if (auto *ptr = gamePlayRegistry.try_ctx<GameplayContext>(); ptr)
+      {
+        registry.emplace_or_replace<Graphic::RenderSprite>(playerHandle.entity(),
+                                                           ptr->player_sprite,               // rotate
+                                                           ptr->player_render_group,         // render groupe
+                                                           glm::vec4(1.0f, 0.5f, 0.5f, 1.0f) // color
+        );
+      }
+    }
+    void desactive_passthrough(entt::registry &registry)
+    {
+      auto ballHandle = ball(registry);
+      auto playerHandle = player(registry);
+      auto &ball = ballHandle.get<Ball>();
+      ball.passThrough = false;
+      if (auto *ptr = gamePlayRegistry.try_ctx<GameplayContext>(); ptr)
+      {
+        registry.emplace_or_replace<Graphic::RenderSprite>(playerHandle.entity(),
+                                                           ptr->player_sprite,               // rotate
+                                                           ptr->player_render_group,         // render groupe
+                                                           glm::vec4(1.0f, 1.0f, 0.5f, 1.0f) // color
+        );
+      }
+    }
+    void active_padsize_increase(entt::registry &registry)
+    {
+      auto playerHandle = player(registry);
+      auto &transform = playerHandle.get<Graphic::Transform>();
+      transform.size.x = PLAYER_SIZE.x + 50;
+    }
+    void desactive_padsize_increase(entt::registry &registry)
+    {
+      auto playerHandle = player(registry);
+      auto &transform = playerHandle.get<Graphic::Transform>();
+      transform.size.x = PLAYER_SIZE.x;
+    }
+    void active_speed_power_up(entt::registry &registry)
+    {
+      auto playerHandle = player(registry);
+      auto &movable = playerHandle.get<Gameplay::Movable>();
+      movable.speed = PLAYER_SPEED * 1.2f;
+    }
+    void desactive_speed_power_up(entt::registry &registry)
+    {
+      auto playerHandle = player(registry);
+      auto &movable = playerHandle.get<Gameplay::Movable>();
+      movable.speed = PLAYER_SPEED;
+    }
+    void active_powerup(entt::registry &registry, PowerUp powerup)
+    {
+      std::cout << "Active power up " << debug_powerup(powerup) << std::endl;
+      auto p = player(registry);
+      auto soundToPlay = Audio::Play2D("powerup"_hs, false, 4500);
+      if (registry.all_of<Audio::Play2D>(p) == false)
+      {
+        registry.emplace<Audio::Play2D>(p, soundToPlay);
+      }
+      else
+      {
+        registry.replace<Audio::Play2D>(p, soundToPlay);
+      }
+      switch (powerup.type)
+      {
+      case PowerUp::Type::Chaos:
+        Graphic::PostProcessing::active_effect("chaos"_hs);
+        break;
+      case PowerUp::Type::Confuse:
+        Graphic::PostProcessing::active_effect("invert"_hs);
+        break;
+      case PowerUp::Type::PadSizeIncrease:
+        active_padsize_increase(registry);
+        break;
+      case PowerUp::Type::PassThrough:
+        active_passthrough(registry);
+        break;
+      case PowerUp::Type::Speed:
+        active_speed_power_up(registry);
+        break;
+      case PowerUp::Type::Sticky:
+        active_sticky(registry);
+        break;
+      default:
+        break;
+      }
+    }
+    void desactive_powerup(entt::registry &registry, PowerUp powerup)
+    {
+      std::cout << "Desactive power up " << debug_powerup(powerup) << std::endl;
+      powerup.active = false;
+      switch (powerup.type)
+      {
+      case PowerUp::Type::Chaos:
+        Graphic::PostProcessing::desactive_effect("chaos"_hs);
+        break;
+      case PowerUp::Type::Confuse:
+        Graphic::PostProcessing::desactive_effect("invert"_hs);
+        break;
+      case PowerUp::Type::PadSizeIncrease:
+        desactive_padsize_increase(registry);
+        break;
+      case PowerUp::Type::PassThrough:
+        desactive_passthrough(registry);
+        break;
+      case PowerUp::Type::Speed:
+        desactive_speed_power_up(registry);
+        break;
+      case PowerUp::Type::Sticky:
+        desactive_sticky(registry);
+        break;
+      default:
+        break;
+      }
+    }
+    void on_powerup(entt::registry &registry, PowerUp powerup)
+    {
 
-  } // namespace
+      /*     std::cout << "On power up " << debug_powerup(powerup) << std::endl; */
+    }
+    void uodate_powerup(entt::registry &registry, float dt)
+    {
+      auto view = registry.view<PowerUp, Graphic::Target, Duration>();
+      auto p = player(registry);
+      for (auto entity : view)
+      {
+        auto [powerup, target, duration] = view.get(entity);
+        if (target.target == p.entity())
+        {
+
+          if (duration.value > 0)
+          {
+            if (powerup.active == false)
+            {
+              powerup.active = true;
+              active_powerup(registry, powerup);
+            }
+            else
+            {
+              on_powerup(registry, powerup);
+            }
+          }
+          else if (powerup.active == true)
+          {
+            powerup.active = false;
+            desactive_powerup(registry, powerup);
+          }
+        }
+      }
+    }
+    void reset_powerup(entt::registry &registry)
+    {
+      auto view = registry.view<Gameplay::PowerUp>();
+      for (auto entity : view)
+      {
+        auto &powerup = view.get<Gameplay::PowerUp>(entity);
+        if (powerup.active == true)
+        {
+          desactive_powerup(registry, powerup);
+        }
+        if (registry.all_of<Graphic::Destroy>(entity) == false)
+        {
+          registry.emplace<Graphic::Destroy>(entity);
+        }
+        else
+        {
+          registry.destroy(entity);
+        }
+      }
+    }
+    // GAMEOVER
+    void on_gameover(entt::registry &registry)
+    {
+      auto gameHandle = game_state(registry);
+      gameHandle.get<BreakoutGame>().currentLevel = "0"_hs;
+      reset_powerup(registry);
+      render_level(registry, gameHandle.get<BreakoutGame>().currentLevel);
+      reset_player(registry);
+      display_gameover(registry);
+    }
+    void when_entity_hit_bottom(entt::registry &registry, entt::entity entity)
+    {
+      GameMonoState::decrease_life();
+      if (GameMonoState::life() == 0)
+      {
+        GameMonoState::gameover(true);
+      }
+      if (GameMonoState::is_gameover() == false)
+      {
+        if (registry.all_of<Ball>(entity))
+        {
+          reset_powerup(registry);
+          reset_player(registry);
+          reset_level(registry);
+          update_life_gui(registry);
+        }
+        else
+        {
+          registry.emplace<Graphic::Destroy>(entity);
+        }
+      }
+      else
+      {
+        on_gameover(registry);
+      }
+    }
+
+  } // end of namespace
   std::shared_ptr<Level> level_loader::load(const std::string &filePath,
                                             unsigned int lvlWidth,
                                             unsigned int lvlHeight) const
@@ -745,7 +1013,7 @@ namespace Gameplay
 
     // game state
     GameMonoState::life(INITIAL_LIFE);
-    entt::monostate<"player_score"_hs>{} = 0;
+    GameMonoState::gameover(false);
 
     init_game_shader(w, h);
     init_game_sound();
@@ -790,6 +1058,7 @@ namespace Gameplay
     auto gameEntity = registry.create();
     auto gameState = registry.emplace<BreakoutGame>(gameEntity, "1"_hs);
     registry.emplace<Audio::Play2D>(gameEntity, "background"_hs, true);
+    load_level("0"_hs, "./assets/zero.txt", w, h / 2);
     load_level("1"_hs, "./assets/one.txt", w, h / 2);
     load_level("2"_hs, "./assets/two.txt", w, h / 2);
     load_level("3"_hs, "./assets/three.txt", w, h / 2);
@@ -870,221 +1139,21 @@ namespace Gameplay
       }
     }
   }
-  const std::string debug_powerup(PowerUp powerup)
-  {
-    char *PowerUpTypes[] =
-        {
-            "Chaos",
-            "Speed",
-            "Sticky",
-            "PassThrough",
-            "PadSizeIncrease",
-            "Confuse"};
-    return PowerUpTypes[static_cast<int>(powerup.type)];
-  }
-  void active_sticky(entt::registry &registry)
-  {
-    auto ballHandle = ball(registry);
-    auto playerHandle = player(registry);
-    auto &ball = ballHandle.get<Ball>();
-    ball.sticky = true;
-    if (auto *ptr = gamePlayRegistry.try_ctx<GameplayContext>(); ptr)
-    {
-      registry.emplace_or_replace<Graphic::RenderSprite>(playerHandle.entity(),
-                                                         ptr->player_sprite,               // rotate
-                                                         ptr->player_render_group,         // render groupe
-                                                         glm::vec4(1.0f, 0.5f, 1.0f, 1.0f) // color
-      );
-    }
-  }
-  void desactive_sticky(entt::registry &registry)
-  {
-    auto ballHandle = ball(registry);
-    auto playerHandle = player(registry);
-    auto &ball = ballHandle.get<Ball>();
-    ball.sticky = false;
-    if (auto *ptr = gamePlayRegistry.try_ctx<GameplayContext>(); ptr)
-    {
-      registry.emplace_or_replace<Graphic::RenderSprite>(playerHandle.entity(),
-                                                         ptr->player_sprite,               // rotate
-                                                         ptr->player_render_group,         // render groupe
-                                                         glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) // color
-      );
-    }
-  }
-  void active_passthrough(entt::registry &registry)
-  {
-    auto ballHandle = ball(registry);
-    auto playerHandle = player(registry);
-    auto &ball = ballHandle.get<Ball>();
-    ball.passThrough = true;
-    if (auto *ptr = gamePlayRegistry.try_ctx<GameplayContext>(); ptr)
-    {
-      registry.emplace_or_replace<Graphic::RenderSprite>(playerHandle.entity(),
-                                                         ptr->player_sprite,               // rotate
-                                                         ptr->player_render_group,         // render groupe
-                                                         glm::vec4(1.0f, 0.5f, 0.5f, 1.0f) // color
-      );
-    }
-  }
-  void desactive_passthrough(entt::registry &registry)
-  {
-    auto ballHandle = ball(registry);
-    auto playerHandle = player(registry);
-    auto &ball = ballHandle.get<Ball>();
-    ball.passThrough = false;
-    if (auto *ptr = gamePlayRegistry.try_ctx<GameplayContext>(); ptr)
-    {
-      registry.emplace_or_replace<Graphic::RenderSprite>(playerHandle.entity(),
-                                                         ptr->player_sprite,               // rotate
-                                                         ptr->player_render_group,         // render groupe
-                                                         glm::vec4(1.0f, 1.0f, 0.5f, 1.0f) // color
-      );
-    }
-  }
-  void active_padsize_increase(entt::registry &registry)
-  {
-    auto playerHandle = player(registry);
-    auto &transform = playerHandle.get<Graphic::Transform>();
-    transform.size.x = PLAYER_SIZE.x + 50;
-  }
-  void desactive_padsize_increase(entt::registry &registry)
-  {
-    auto playerHandle = player(registry);
-    auto &transform = playerHandle.get<Graphic::Transform>();
-    transform.size.x = PLAYER_SIZE.x;
-  }
-  void active_speed_power_up(entt::registry &registry)
-  {
-    auto playerHandle = player(registry);
-    auto &movable = playerHandle.get<Gameplay::Movable>();
-    movable.speed = PLAYER_SPEED * 1.2f;
-  }
-  void desactive_speed_power_up(entt::registry &registry)
-  {
-    auto playerHandle = player(registry);
-    auto &movable = playerHandle.get<Gameplay::Movable>();
-    movable.speed = PLAYER_SPEED;
-  }
-  void active_powerup(entt::registry &registry, PowerUp powerup)
-  {
-    std::cout << "Active power up " << debug_powerup(powerup) << std::endl;
-    auto p = player(registry);
-    auto soundToPlay = Audio::Play2D("powerup"_hs, false, 4500);
-    if (registry.all_of<Audio::Play2D>(p) == false)
-    {
-      registry.emplace<Audio::Play2D>(p, soundToPlay);
-    }
-    else
-    {
-      registry.replace<Audio::Play2D>(p, soundToPlay);
-    }
-    switch (powerup.type)
-    {
-    case PowerUp::Type::Chaos:
-      Graphic::PostProcessing::active_effect("chaos"_hs);
-      break;
-    case PowerUp::Type::Confuse:
-      Graphic::PostProcessing::active_effect("invert"_hs);
-      break;
-    case PowerUp::Type::PadSizeIncrease:
-      active_padsize_increase(registry);
-      break;
-    case PowerUp::Type::PassThrough:
-      active_passthrough(registry);
-      break;
-    case PowerUp::Type::Speed:
-      active_speed_power_up(registry);
-      break;
-    case PowerUp::Type::Sticky:
-      active_sticky(registry);
-      break;
-    default:
-      break;
-    }
-  }
-  void desactive_powerup(entt::registry &registry, PowerUp powerup)
-  {
-    std::cout << "Desactive power up " << debug_powerup(powerup) << std::endl;
-    switch (powerup.type)
-    {
-    case PowerUp::Type::Chaos:
-      Graphic::PostProcessing::desactive_effect("chaos"_hs);
-      break;
-    case PowerUp::Type::Confuse:
-      Graphic::PostProcessing::desactive_effect("invert"_hs);
-      break;
-    case PowerUp::Type::PadSizeIncrease:
-      desactive_padsize_increase(registry);
-      break;
-    case PowerUp::Type::PassThrough:
-      desactive_passthrough(registry);
-      break;
-    case PowerUp::Type::Speed:
-      desactive_speed_power_up(registry);
-      break;
-    case PowerUp::Type::Sticky:
-      desactive_sticky(registry);
-      break;
-    default:
-      break;
-    }
-  }
-  void on_powerup(entt::registry &registry, PowerUp powerup)
-  {
 
-    /*     std::cout << "On power up " << debug_powerup(powerup) << std::endl; */
-  }
-  void uodate_powerup(entt::registry &registry, float dt)
-  {
-    auto view = registry.view<PowerUp, Graphic::Target, Duration>();
-    auto p = player(registry);
-    for (auto entity : view)
-    {
-      auto [powerup, target, duration] = view.get(entity);
-      if (target.target == p.entity())
-      {
-
-        if (duration.value > 0)
-        {
-          if (powerup.active == false)
-          {
-            powerup.active = true;
-            active_powerup(registry, powerup);
-          }
-          else
-          {
-            on_powerup(registry, powerup);
-          }
-        }
-        else if (powerup.active == true)
-        {
-          powerup.active = false;
-          desactive_powerup(registry, powerup);
-        }
-      }
-    }
-  }
   void update(entt::registry &registry, float dt)
   {
     update_duration(registry, dt);
     update_shake(registry, dt);
     uodate_powerup(registry, dt);
-    mouvement(
-        registry, [&registry](entt::entity entity) {
-          GameMonoState::decrease_life();
-          update_life_gui(registry);
-          if (registry.all_of<Ball>(entity))
+    if (GameMonoState::is_gameover() == false)
+    {
+      mouvement(
+          registry, [&registry](entt::entity entity) // callback when ball it bottom of screen
           {
-            reset_player(registry);
-            reset_level(registry);
-          }
-          else
-          {
-            registry.emplace<Graphic::Destroy>(entity);
-          }
-        });
-    on_collision(registry);
+            when_entity_hit_bottom(registry, entity);
+          });
+      on_collision(registry);
+    }
   }
 
   entt::resource_handle<Level> load_level(entt::hashed_string &levelId,
@@ -1133,38 +1202,41 @@ namespace Gameplay
     }
     handle_error_context();
   }
-  void processInput(Registry &registry, float dt, int action)
+  void process_input(Registry &registry, float dt, int action)
   {
-    auto players = registry.view<Movable,
-                                 Graphic::Position, Graphic::Transform>();
-    auto world = Game::world(registry).get<Game::World>();
-    for (auto player : players)
+    if (GameMonoState::is_gameover() == false)
     {
-      auto velocity = players.get<Movable>(player);
-      auto transform = players.get<Graphic::Transform>(player);
-      if (action == GLFW_KEY_LEFT)
+      auto players = registry.view<Movable,
+                                   Graphic::Position, Graphic::Transform>();
+      auto world = Game::world(registry).get<Game::World>();
+      for (auto player : players)
       {
-        registry.patch<Graphic::Position>(
-            player, [dt, velocity, world](Graphic::Position &position) {
-              if (position.value.x >= 0.0f)
-              {
-                position.value.x -= velocity.speed.x * dt;
-              }
-            });
+        auto velocity = players.get<Movable>(player);
+        auto transform = players.get<Graphic::Transform>(player);
+        if (action == GLFW_KEY_LEFT)
+        {
+          registry.patch<Graphic::Position>(
+              player, [dt, velocity, world](Graphic::Position &position) {
+                if (position.value.x >= 0.0f)
+                {
+                  position.value.x -= velocity.speed.x * dt;
+                }
+              });
+        }
+        if (action == GLFW_KEY_RIGHT)
+        {
+          registry.patch<Graphic::Position>(
+              player, [dt, velocity, world, transform](Graphic::Position &position) {
+                if (position.value.x <= world.viewport.x - transform.size.x)
+                  position.value.x += velocity.speed.x * dt;
+              });
+        }
       }
-      if (action == GLFW_KEY_RIGHT)
+      if (action == GLFW_KEY_SPACE)
       {
-        registry.patch<Graphic::Position>(
-            player, [dt, velocity, world, transform](Graphic::Position &position) {
-              if (position.value.x <= world.viewport.x - transform.size.x)
-                position.value.x += velocity.speed.x * dt;
-            });
+        auto ballHandle = ball(registry);
+        ballHandle.remove_if_exists<Movable>();
       }
-    }
-    if (action == GLFW_KEY_SPACE)
-    {
-      auto ballHandle = ball(registry);
-      ballHandle.remove_if_exists<Movable>();
     }
   }
 } // namespace Gameplay

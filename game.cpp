@@ -67,7 +67,7 @@ namespace Game
 void Game::processInput(Registry &registry, int action)
 {
   auto context = game_context(registry);
-  Gameplay::processInput(registry,
+  Gameplay::process_input(registry,
                          context->delatTime, // delta time
                          action              // action
   );

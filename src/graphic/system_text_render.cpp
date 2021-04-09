@@ -117,7 +117,7 @@ namespace Graphic
                 glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
                                       (void *)0);
 
-                glBufferData(GL_ARRAY_BUFFER, MAX_BUFFER_SIZE * 4 * sizeof(float), 0, GL_DYNAMIC_DRAW);
+                glBufferData(GL_ARRAY_BUFFER, MAX_BUFFER_SIZE * sizeof(glm::vec2), (void *)0, GL_DYNAMIC_DRAW);
 
                 glBindBuffer(GL_ARRAY_BUFFER, 0);
                 glBindVertexArray(0);
@@ -232,9 +232,10 @@ namespace Graphic
                 }
                 if (vertices.size() > 0)
                 {
-                    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+                    //TODO: To Debug
+                    /* glBindBuffer(GL_ARRAY_BUFFER, VBO);
                     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vertices), &vertices[0], GL_DYNAMIC_DRAW);
-                    glBindBuffer(GL_ARRAY_BUFFER, 0);
+                    glBindBuffer(GL_ARRAY_BUFFER, 0); */
                 }
                 return;
             }
@@ -276,6 +277,7 @@ namespace Graphic
                         Character ch = characters[hash];
                         glBindTexture(GL_TEXTURE_2D, ch.textureId);
                         glDrawArrays(GL_TRIANGLES, i * 6, 6);
+                        glBindTexture(GL_TEXTURE_2D, 0);
                         i++;
                     }
                 }
