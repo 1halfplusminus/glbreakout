@@ -16,9 +16,25 @@
 #include <functional>
 #include "audio/system_audio.hpp"
 #include "graphic/system_text_render.hpp"
+#include <string>
+
 namespace Gameplay
 {
-
+  namespace GameMonoState
+  {
+    unsigned int life()
+    {
+      return entt::monostate<"player_life"_hs>{};
+    }
+    void life(unsigned int life)
+    {
+      entt::monostate<"player_life"_hs>{} = life;
+    }
+    void decrease_life(unsigned int value = 1)
+    {
+      entt::monostate<"player_life"_hs>{} = life() - value;
+    }
+  };
   auto nBottomMiddle = glm::vec3(0.f, 1.f, 0.f);
   auto nBottomLeft = glm::normalize(glm::vec3(0.f, 1.f, 0.f));
   auto nBottomRight = glm::normalize(glm::vec3(0.f, 1.f, 0.f));
@@ -30,6 +46,9 @@ namespace Gameplay
   constexpr glm::vec3 VELOCITY_INITIAL(50.0f, -350.0f, 0.0f);
   constexpr glm::vec2 PLAYER_SIZE(100.0f, 20.0f);
   constexpr glm::vec3 PLAYER_SPEED(2500.0f, 0.0f, 0.0f);
+  constexpr entt::hashed_string FONT = "roboto"_hs;
+  constexpr unsigned int FONT_SIZE = 28;
+  constexpr unsigned int INITIAL_LIFE = 3;
   namespace
   {
     entt::registry gamePlayRegistry;
@@ -54,30 +73,58 @@ namespace Gameplay
       }
       return (Direction)best_match;
     }
-    void handle_error_context()
+
+        void handle_error_context()
     {
       std::cout << "gameplay context not initialized !";
       exit(1);
     }
-    void init_gui(entt::registry &registry, unsigned int w, unsigned int h)
-    {
-      const int size = 70;
-      Graphic::Text::load_font("roboto"_hs, "./fonts/Roboto-Light.ttf", size);
 
+    void display_score(entt::registry &registry, unsigned int w, unsigned int h)
+    {
       auto scoreText = Graphic::Text::RenderText();
       scoreText.color = glm::vec3(1.0f, 1.0f, 1.0f);
-      scoreText.font = "roboto"_hs;
-      scoreText.text = "0";
-      scoreText.position = glm::vec2(10, h - 10);
+      scoreText.font = FONT;
+      scoreText.text = "Score: 0";
+      scoreText.position = glm::vec2(16, h - 24);
       scoreText.scale = 1.0f;
-      scoreText.size = size;
+      scoreText.size = FONT_SIZE;
       auto score = registry.create();
       registry.emplace<Graphic::Text::RenderText>(score, scoreText);
       registry.emplace<entt::tag<"score"_hs>>(score);
     }
-    /*  Graphic::Text::RenderText &get_score_text(entt::registry &registry)
+    const std::string format_life(unsigned int life)
     {
-    } */
+      return "Life: " + std::to_string(life);
+    }
+    void display_life(entt::registry &registry, unsigned int w, unsigned int h)
+    {
+
+      auto text = Graphic::Text::RenderText();
+      text.color = glm::vec3(252.f, 188.f, 178.f);
+      text.font = FONT;
+      text.position = glm::vec2(694, h - 24);
+      text.text = format_life(GameMonoState::life());
+      text.scale = 1.0f;
+      text.size = FONT_SIZE;
+      auto hud = registry.create();
+      registry.emplace<Graphic::Text::RenderText>(hud, text);
+      registry.emplace<entt::tag<"life"_hs>>(hud);
+    }
+    void update_life_gui(entt::registry &registry)
+    {
+      auto hud = registry.view<entt::tag<"life"_hs>>().front();
+      auto &renderText = registry.get<Graphic::Text::RenderText>(hud);
+      renderText.text = format_life(GameMonoState::life());
+    }
+
+    void init_gui(entt::registry &registry, unsigned int w, unsigned int h)
+    {
+      Graphic::Text::load_font("roboto"_hs, "./fonts/Roboto-Light.ttf", FONT_SIZE);
+      display_score(registry, w, h);
+      display_life(registry, w, h);
+    }
+
     entt::basic_handle<entt::entity> player(entt::registry &registry)
     {
       auto players = registry.view<entt::tag<Gameplay::player_tag>>();
@@ -696,9 +743,14 @@ namespace Gameplay
   void init(entt::registry &registry, unsigned int w, unsigned int h)
   {
 
+    // game state
+    GameMonoState::life(INITIAL_LIFE);
+    entt::monostate<"player_score"_hs>{} = 0;
+
     init_game_shader(w, h);
     init_game_sound();
     init_gui(registry, w, h);
+
     auto &context = gamePlayRegistry.set<GameplayContext>();
 
     auto backgroud_image =
@@ -1020,6 +1072,8 @@ namespace Gameplay
     uodate_powerup(registry, dt);
     mouvement(
         registry, [&registry](entt::entity entity) {
+          GameMonoState::decrease_life();
+          update_life_gui(registry);
           if (registry.all_of<Ball>(entity))
           {
             reset_player(registry);

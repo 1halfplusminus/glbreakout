@@ -10,7 +10,7 @@ namespace Graphic
             glm::vec2 position;
             std::string text;
             glm::vec3 color;
-            float scale;
+            float scale = 1.0f;
             entt::hashed_string font;
             int size;
         };

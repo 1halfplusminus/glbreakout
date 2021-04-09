@@ -28,6 +28,7 @@ namespace Graphic
             static constexpr entt::hashed_string TEXT_SHADER = "TEXT_SHADER"_hs;
             static constexpr entt::hashed_string TEXT_VAO = "TEXT_VAO"_hs;
             static constexpr entt::hashed_string TEXT_VBO = "TEXT_VBO"_hs;
+            const int MAX_BUFFER_SIZE = 10000000;
             entt::registry textRenderRegistry;
             FT_Library ft;
             std::unordered_map<int, Character> characters;
@@ -115,6 +116,8 @@ namespace Graphic
                 glEnableVertexAttribArray(0);
                 glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
                                       (void *)0);
+
+                glBufferData(GL_ARRAY_BUFFER, MAX_BUFFER_SIZE * 4 * sizeof(float), 0, GL_DYNAMIC_DRAW);
 
                 glBindBuffer(GL_ARRAY_BUFFER, 0);
                 glBindVertexArray(0);
@@ -219,6 +222,7 @@ namespace Graphic
                 auto view = registry.view<RenderText>();
                 const int VBO = ptr->vbo;
                 std::vector<glm::vec2> vertices;
+
                 for (auto &[entity, renderText] : view.each())
                 {
 
@@ -229,7 +233,7 @@ namespace Graphic
                 if (vertices.size() > 0)
                 {
                     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-                    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vertices), &vertices[0], GL_STREAM_DRAW);
+                    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vertices), &vertices[0], GL_DYNAMIC_DRAW);
                     glBindBuffer(GL_ARRAY_BUFFER, 0);
                 }
                 return;
