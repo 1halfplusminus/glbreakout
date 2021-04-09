@@ -25,8 +25,6 @@ namespace Game
 {
   namespace
   {
-    std::thread tr;
-
     GameContext *game_context(Registry &registry)
     {
       if (auto *ptr = registry.try_ctx<GameContext>(); ptr)
