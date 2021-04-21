@@ -1001,9 +1001,9 @@ namespace Gameplay
 
     auto main_vs = Graphic::load_shader("main_vs"_hs, main_vs_source);
     auto main_fs = Graphic::load_shader("main_fs"_hs, main_fs_source);
-
+    auto shaders = std::vector<Graphic::Shader>{main_vs, main_fs};
     auto main_shader_r = Graphic::load_shader_program(
-        "main"_hs, std::vector<Graphic::Shader>{main_vs, main_fs});
+        "main"_hs, shaders);
 
     Graphic::add_projection_matrix(glm::ortho(
         0.0f, static_cast<float>(w), static_cast<float>(h), 0.0f, -1.0f, 1.0f));
@@ -1026,7 +1026,7 @@ namespace Gameplay
 
     auto &atlas = Graphic::get_texture("atlas"_hs).get();
 
-    auto &background_texture =
+    auto background_texture =
         Graphic::load_texture("background"_hs, backgroud_image);
 
     context.backgroud_render_group =
@@ -1156,7 +1156,7 @@ namespace Gameplay
     }
   }
 
-  entt::resource_handle<Level> load_level(entt::hashed_string &levelId,
+  entt::resource_handle<Level> load_level(entt::hashed_string levelId,
                                           const std::string &path,
                                           unsigned int lvlWidth,
                                           unsigned int lvlHeight)

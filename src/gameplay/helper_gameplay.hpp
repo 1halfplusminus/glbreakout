@@ -52,7 +52,7 @@ namespace Gameplay
                                 unsigned int lvlHeight) const;
   };
   void init(entt::registry &registry, unsigned int w, unsigned int h);
-  entt::resource_handle<Level> load_level(entt::hashed_string &levelId,
+  entt::resource_handle<Level> load_level(entt::hashed_string levelId,
                                           const std::string &path,
                                           unsigned int lvlWidth,
                                           unsigned int lvlHeight);

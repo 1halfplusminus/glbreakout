@@ -11,7 +11,7 @@ namespace Audio
         void handle_error_context()
         {
             std::cout << "audio context not initialized !" << std::endl;
-            throw std::invalid_argument::invalid_argument(
+            throw std::invalid_argument(
                 "audio context not initialized !");
         }
         void init_context(entt::registry &registry)

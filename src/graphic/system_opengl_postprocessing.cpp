@@ -33,9 +33,9 @@ namespace Graphic
 
             auto postprocessing_vs = Graphic::load_shader(postprocessing_vs_source_key, postprocessing_vs_source);
             auto postprocessing_fs = Graphic::load_shader(postprocessing_fs_source_key, postprocessing_fs_source);
-
+            auto shaders = std::vector<Graphic::Shader>{postprocessing_vs, postprocessing_fs};
             auto postprocessing_shader_r = Graphic::load_shader_program(
-                key, std::vector<Graphic::Shader>{postprocessing_vs, postprocessing_fs});
+                key, shaders);
         }
         void active_effect(entt::hashed_string key)
         {

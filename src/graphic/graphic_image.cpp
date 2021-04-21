@@ -26,14 +26,14 @@ namespace Graphic
 
 Graphic::Image::Image() {}
 
-Graphic::Image::Image(std::string path, bool flipVertically)
+Graphic::Image::Image(const std::string path, bool flipVertically)
 {
   this->path = path;
   this->flipVertically = flipVertically;
 };
 
 std::shared_ptr<Graphic::Image>
-Graphic::image_loader::load(std::string path, bool flipVertically) const
+Graphic::image_loader::load(const std::string path, bool flipVertically) const
 {
   auto image = std::shared_ptr<Graphic::Image>(new Image());
   image->path = path;

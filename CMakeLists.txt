@@ -1,11 +1,38 @@
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest")
+set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
+set(CMAKE_PREFIX_PATH "/usr/lib/x86_64-linux-gnu")
+IF (WIN32)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest")
+ELSE()
+set (CMAKE_CXX_STANDARD 20)
+#set(X11_X11_LIB "/usr/lib/X11")
+#set( OPENGL_opengl_LIBRARY "/usr/lib/x86_64-linux-gnu")
+#set( OPENGL_glx_LIBRARY "/usr/include/GL")
+#set( UDEV_LIBRARIES "/lib/x86_64-linux-gnu")
+#set( OPENAL_LIBRARY "/lib/x86_64-linux-gnu")
+#set( VORBIS_LIBRARIES "/usr/lib/x86_64-linux-gnu/libvorbis.so.0.4.8")
+#	set(CMAKE_MODULE_PATH "/usr/include")
+#    set(X11_X11_INCLUDE_PATH "/usr/include/X11")
+# 	set(X11_X11_LIB "/usr/lib/X11")
+# 	set( OPENGL_opengl_LIBRARY "/usr/lib/x86_64-linux-gnu")
+# 	set( OPENGL_glx_LIBRARY "/usr/include/GL")
+# 	set( OPENGL_glx_LIBRARY "/usr/include/GL")
+# 	set( UDEV_LIBRARIES "/lib/x86_64-linux-gnu")
+# 	set(OPENAL_LIBRARY "/usr/include/openal")
+# 	set(VORBIS_INCLUDE_DIRS "/usr/include")
+# 	set(VORBIS "/usr/include/vorbis")
+# 	set(VORBISENC_LIBRARY "/usr/include/vorbis")
+# 	set(VORBISFILE_LIBRARY "/usr/include/vorbis")
+  # set stuff for other systems
+ENDIF()
+
 
 cmake_minimum_required(VERSION 3.7)
 project(glbreakout VERSION 0.1.0)
 
 include(CTest)
 enable_testing()
+
 
 INCLUDE_DIRECTORIES(./glfw/include)
 INCLUDE_DIRECTORIES(./glad/include)
@@ -20,6 +47,8 @@ add_subdirectory (entt)
 # set variables that are needed
 add_subdirectory (SFML)
 link_directories(./SFML/extlibs/libs-msvc/x64)
+
+
 file(GLOB MY_HEADERS ./SFML/extlibs/bin/x64/*.dll)
 
 # set variables that are needed
@@ -40,6 +69,7 @@ set(ALL_LIBS
 	EnTT
 	sfml-system
 	sfml-audio
+	${FLAC_LIBRARY}
 )
 
 set(HEADER_FILES 

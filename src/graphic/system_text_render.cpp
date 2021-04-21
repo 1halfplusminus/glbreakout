@@ -37,7 +37,7 @@ namespace Graphic
             {
                 std::cout << "render text context not initialized !" << std::endl;
 
-                throw std::invalid_argument::invalid_argument(
+                throw std::invalid_argument(
                     "render text context not initialized !");
             }
             void init_context(entt::registry &registry)
@@ -92,7 +92,7 @@ namespace Graphic
                     texture,
                     glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
                     glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
-                    face->glyph->advance.x,
+                    static_cast<unsigned int>(face->glyph->advance.x),
                     sprite};
                 entt::hashed_string hash = hash_character(face, c, size);
                 characters[hash] = character;
@@ -146,8 +146,9 @@ namespace Graphic
                 auto text_vs = Graphic::load_shader("text_vs"_hs, text_vs_source);
                 auto text_fs = Graphic::load_shader("text_fs"_hs, text_fs_source);
 
+                auto shaders = std::vector<Graphic::Shader>{text_vs, text_fs};
                 auto text_shader_r = Graphic::load_shader_program(
-                    "text"_hs, std::vector<Graphic::Shader>{text_vs, text_fs});
+                    "text"_hs, shaders);
                 if (auto *ptr = textRenderRegistry.try_ctx<TextRenderContext>(); ptr)
                 {
                     ptr->program = text_shader_r;
@@ -222,8 +223,7 @@ namespace Graphic
                 auto view = registry.view<RenderText>();
                 const int VBO = ptr->vbo;
                 std::vector<glm::vec2> vertices;
-
-                for (auto &[entity, renderText] : view.each())
+                for (auto [entity, renderText] : view.each())
                 {
 
                     auto font_face = ptr->font_cache.handle(renderText.font);
@@ -260,7 +260,7 @@ namespace Graphic
                 glActiveTexture(GL_TEXTURE0);
                 glUniform1i(glGetUniformLocation(shader.id, "text"), 0);
                 int i = 0;
-                for (auto &[entity, renderText] : view.each())
+                for (auto [entity, renderText] : view.each())
                 {
 
                     auto font_face = ptr->font_cache.handle(renderText.font);

@@ -32,8 +32,9 @@ namespace Graphic
             auto particle_vs = Graphic::load_shader("particle_vs"_hs, particle_vs_source);
             auto particle_fs = Graphic::load_shader("particle_fs"_hs, particle_fs_source);
 
+            auto shaders = std::vector<Graphic::Shader>{particle_vs, particle_fs};
             auto particle_shader_r = Graphic::load_shader_program(
-                key, std::vector<Graphic::Shader>{particle_vs, particle_fs});
+                key, shaders);
         }
         void active_shader(entt::hashed_string key)
         {

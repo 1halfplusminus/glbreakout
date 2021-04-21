@@ -19,7 +19,7 @@ namespace Graphic
     void handle_error_context()
     {
       std::cout << "render context not initialized !" << std::endl;
-      throw std::invalid_argument::invalid_argument(
+      throw std::invalid_argument(
           "render context not initialized !");
     }
     void init_context(entt::registry &registry)
@@ -140,21 +140,21 @@ namespace Graphic
               groupRegistry.destroy(vEntity);
             }
           }
-          std::vector<Graphic::VertexData> data{
-              Graphic::VertexData{glm::vec4(0.0f, 1.0f, 0.0f, 1.0f)},
-              Graphic::VertexData{glm::vec4(1.0f, 0.0f, 1.0f, 0.0f)},
-              Graphic::VertexData{glm::vec4(0.0f, 0.0f, 0.0f, 0.0f)},
-              Graphic::VertexData{glm::vec4(0.0f, 1.0f, 0.0f, 1.0f)},
-              Graphic::VertexData{glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)},
-              Graphic::VertexData{glm::vec4(1.0f, 0.0f, 1.0f, 0.0f)}};
+          std::vector<VertexData> data{
+              VertexData{glm::vec4(0.0f, 1.0f, 0.0f, 1.0f)},
+              VertexData{glm::vec4(1.0f, 0.0f, 1.0f, 0.0f)},
+              VertexData{glm::vec4(0.0f, 0.0f, 0.0f, 0.0f)},
+              VertexData{glm::vec4(0.0f, 1.0f, 0.0f, 1.0f)},
+              VertexData{glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)},
+              VertexData{glm::vec4(1.0f, 0.0f, 1.0f, 0.0f)}};
           for (int y = 0; y < data.size(); y++)
           {
             auto vertex = groupRegistry.create();
-            glm::vec2 uv = Graphic::calculate_uv(renderSprite.sprite, data[y]);
+            glm::vec2 uv = calculate_uv(renderSprite.sprite, data[y]);
             // model
-            glm::mat4 model = Graphic::create_model_matrix(position, transform);
-            groupRegistry.emplace<Graphic::VertexData>(vertex, data[y].vertice, uv,
-                                                       model, renderSprite.color, spriteEntity);
+            glm::mat4 model = create_model_matrix(position, transform);
+            groupRegistry.emplace<VertexData>(vertex, data[y].vertice, uv,
+                                              model, renderSprite.color, spriteEntity);
           }
           renderGroupToUpdate.insert(renderSprite.group.index);
           registry.remove<RenderSprite>(spriteEntity);
@@ -226,7 +226,7 @@ namespace Graphic
                                                       position](VertexData &vData) {
               if (vData.sprite == entity)
               {
-                glm::mat4 model = Graphic::create_model_matrix(position, transform);
+                glm::mat4 model = create_model_matrix(position, transform);
                 vData.transform = model;
               }
             });
@@ -244,89 +244,89 @@ namespace Graphic
       handle_error_context();
     }
   } // namespace
-  entt::resource_handle<Graphic::Shader>
-  Graphic::load_shader(const entt::hashed_string key, ShaderSource &source)
+  entt::resource_handle<Shader>
+  load_shader(const entt::hashed_string key, ShaderSource &source)
   {
     if (auto *ptr = graphicRegistry.try_ctx<RenderContext>(); ptr)
     {
-      auto shader = ptr->shader_cache.load<Graphic::shader_loader>(key, source);
+      auto shader = ptr->shader_cache.load<shader_loader>(key, source);
       return shader;
     }
     handle_error_context();
   }
-  entt::resource_handle<Graphic::ShaderProgam>
-  Graphic::load_shader_program(const entt::hashed_string key,
-                               std::vector<Graphic::Shader> &shaders)
+  entt::resource_handle<ShaderProgam>
+  load_shader_program(const entt::hashed_string key,
+                      std::vector<Shader> &shaders)
   {
     if (auto *ptr = graphicRegistry.try_ctx<RenderContext>(); ptr)
     {
       auto shader =
-          ptr->program_cache.load<Graphic::shader_program_loader>(key, shaders);
+          ptr->program_cache.load<shader_program_loader>(key, shaders);
       // create a entity for the shader
       auto shader_entity = graphicRegistry.create();
-      graphicRegistry.emplace<Graphic::ShaderProgam>(shader_entity,
-                                                     shader.get().id);
+      graphicRegistry.emplace<ShaderProgam>(shader_entity,
+                                            shader.get().id);
       return shader;
     }
     handle_error_context();
   }
-  entt::resource_handle<Graphic::ShaderSource>
-  Graphic::load_shader_source(const entt::hashed_string key,
-                              const std::string &path,
-                              const Graphic::ShaderType type)
+  entt::resource_handle<ShaderSource>
+  load_shader_source(const entt::hashed_string key,
+                     const std::string &path,
+                     const ShaderType type)
   {
     if (auto *ptr = graphicRegistry.try_ctx<RenderContext>(); ptr)
     {
-      auto source = ptr->shader_source_cache.load<Graphic::shader_source_loader>(
+      auto source = ptr->shader_source_cache.load<shader_source_loader>(
           key, path, type);
       return source;
     }
     handle_error_context();
   }
-  entt::resource_handle<Graphic::Image>
-  Graphic::load_image(const entt::hashed_string key, const std::string &path,
-                      bool flipVertically)
+  entt::resource_handle<Image>
+  load_image(const entt::hashed_string key, const std::string &path,
+             bool flipVertically)
   {
     if (auto *ptr = graphicRegistry.try_ctx<RenderContext>(); ptr)
     {
       auto image =
-          ptr->image_cache.load<Graphic::image_loader>(key, path, flipVertically);
+          ptr->image_cache.load<image_loader>(key, path, flipVertically);
       return image;
     }
     handle_error_context();
   }
-  entt::resource_handle<Graphic::Texture>
-  Graphic::load_texture(const entt::hashed_string key, Image &image)
+  entt::resource_handle<Texture>
+  load_texture(const entt::hashed_string key, Image image)
   {
     if (auto *ptr = graphicRegistry.try_ctx<RenderContext>(); ptr)
     {
-      auto &texture =
-          ptr->texture_cache.load<Graphic::texture_image_loader>(key, image);
+      auto texture =
+          ptr->texture_cache.load<texture_image_loader>(key, image);
       return texture;
     }
     handle_error_context();
   }
-  entt::resource_handle<Graphic::ShaderProgam> get_shader_program(const entt::hashed_string key)
+  entt::resource_handle<ShaderProgam> get_shader_program(entt::hashed_string key)
   {
     if (auto *ptr = graphicRegistry.try_ctx<RenderContext>(); ptr)
     {
-      auto &shaderProgam = ptr->program_cache.handle(key);
+      auto shaderProgam = ptr->program_cache.handle(key);
       return shaderProgam;
     }
     handle_error_context();
   }
-  entt::resource_handle<Graphic::Texture> get_texture(const entt::hashed_string key)
+  entt::resource_handle<Texture> get_texture(const entt::hashed_string key)
   {
     if (auto *ptr = graphicRegistry.try_ctx<RenderContext>(); ptr)
     {
-      auto &texture = ptr->texture_cache.handle(key);
+      auto texture = ptr->texture_cache.handle(key);
       return texture;
     }
     handle_error_context();
   }
   RenderGroupHandle
-  Graphic::create_render_group(const entt::hashed_string &shader,
-                               const entt::hashed_string &texture)
+  create_render_group(const entt::hashed_string &shader,
+                      const entt::hashed_string &texture)
   {
     if (auto *ptr = graphicRegistry.try_ctx<RenderContext>(); ptr)
     {
@@ -342,7 +342,7 @@ namespace Graphic
     }
     handle_error_context();
   }
-  void Graphic::clear_render_group(RenderGroupHandle group)
+  void clear_render_group(RenderGroupHandle group)
   {
     if (auto *ptr = graphicRegistry.try_ctx<RenderContext>(); ptr)
     {
@@ -352,7 +352,7 @@ namespace Graphic
     }
     handle_error_context();
   }
-  void Graphic::render_group(entt::registry &registry, const RenderGroup &renderGroup)
+  void render_group(entt::registry &registry, const RenderGroup &renderGroup)
   {
     if (auto *ptr = graphicRegistry.try_ctx<RenderContext>(); ptr)
     {
@@ -388,30 +388,30 @@ namespace Graphic
     }
     handle_error_context();
   }
-  void Graphic::render_group(entt::basic_handle<entt::entity> &group)
+  void render_group(entt::basic_handle<entt::entity> &group)
   {
     auto test = group.registry();
     auto test2 = group.get<RenderGroup>();
     render_group(*test, test2);
   }
-  void Graphic::add_projection_matrix(glm::mat4 projection)
+  void add_projection_matrix(glm::mat4 projection)
   {
     auto camera = graphicRegistry.create();
-    graphicRegistry.emplace<Graphic::ProjectionMatrix>(camera, projection);
+    graphicRegistry.emplace<ProjectionMatrix>(camera, projection);
   }
   ProjectionMatrix projection_matrix()
   {
-    auto e = graphicRegistry.view<Graphic::ProjectionMatrix>().front();
-    return graphicRegistry.get<Graphic::ProjectionMatrix>(e);
+    auto e = graphicRegistry.view<ProjectionMatrix>().front();
+    return graphicRegistry.get<ProjectionMatrix>(e);
   }
-  void Graphic::init(entt::registry &registry)
+  void init(entt::registry &registry)
   {
     init_context(registry);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   }
 
-  void Graphic::update(entt::registry &registry, float dt)
+  void update(entt::registry &registry, float dt)
   {
 
     if (auto *ptr = graphicRegistry.try_ctx<RenderContext>(); ptr)
@@ -435,7 +435,7 @@ namespace Graphic
     }
     handle_error_context();
   }
-  void Graphic::render(entt::registry &registry)
+  void render(entt::registry &registry)
   {
     if (auto *ptr = graphicRegistry.try_ctx<RenderContext>(); ptr)
     {
@@ -453,7 +453,7 @@ namespace Graphic
     }
     handle_error_context();
   }
-  void Graphic::destroy(entt::registry &registry, entt::entity entity)
+  void destroy(entt::registry &registry, entt::entity entity)
   {
     if (auto *ptr = graphicRegistry.try_ctx<RenderContext>(); ptr)
     {
